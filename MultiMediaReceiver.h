@@ -29,7 +29,7 @@ private:
     GstElement* videoDepay;
     GstElement* videoDec;
     GstElement* videoSink;
-
+    
     GstElement* audioSrc;
     GstElement* audioCapsfilter;
     GstElement* jitterbufferAudio;

@@ -218,9 +218,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="F4Main.cpp" />
+    <ClCompile Include="MultimediaManager.cpp" />
     <ClCompile Include="MultiMediaReceiver.cpp" />
     <ClCompile Include="MultiMediaSender.cpp" />
-    <ClCompile Include="Multimedia_Manager.cpp" />
     <ClCompile Include="SocketCommunication.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -230,9 +230,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MultimediaManager.h" />
     <ClInclude Include="MultiMediaReceiver.h" />
     <ClInclude Include="MultiMediaSender.h" />
-    <ClInclude Include="Multimedia_Manager.h" />
     <ClInclude Include="MultiMediaInterface.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SocketCommunication.h" />
