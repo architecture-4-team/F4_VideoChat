@@ -5,8 +5,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
-#include <Winsock2.h>
 #include <WS2tcpip.h>
+#include <Winsock2.h>
 class SocketCommunication
 {
 public:

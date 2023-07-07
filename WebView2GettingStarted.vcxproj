@@ -224,7 +224,14 @@
     <ClCompile Include="SocketCommunication.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CopyFileToFolders Include="CallUI.htm">
+      <DeploymentContent>true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </CopyFileToFolders>
     <None Include="html1.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="login.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="packages.config" />

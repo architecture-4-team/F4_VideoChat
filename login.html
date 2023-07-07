@@ -15,7 +15,7 @@
 
         function SetTitleText() {
             let titleText = document.getElementById("title-text");
-            window.chrome.webview.postMessage(`SetTitleText ${titleText.value}`);
+            window.chrome.webview.postMessage(`Input text is ${titleText.value}`);
         }
         function GetWindowBounds() {
             window.chrome.webview.postMessage("GetWindowBounds");
