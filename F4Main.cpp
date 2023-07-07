@@ -1,4 +1,5 @@
-#include "SocketCommunication.h"
+//#include "SocketCommunication.h"
+#include "socketClient.h"
 #include <Windows.h>
 #include <tchar.h>
 #include <string>
@@ -8,6 +9,8 @@
 #include <iostream>
 #include "WebView2.h"
 #include "resource.h"
+#include "json11.hpp"
+#include "common.h"
 
 using namespace Microsoft::WRL;
 // Pointer to WebViewController
@@ -23,16 +26,27 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
+//SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
+SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 
 HWND g_childWindow;
+HWND g_mainWindow;
+
+std::string uuidString = "";
+std::string destUserString = "bbb@gmail.com";
+
+std::string uuidStringB = "";
+std::string destUserStringB = "aaa@gmail.com";
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
 	HWND hChildWindow;
 
-	socketComm->Start();
+	//socketComm->Start();
+//	socketClient->Connect(hMainWindow);
+	//socketComm->ReceiveResponse();
 
 	// Store the instance handle
 	g_hInstance = hInstance;
@@ -84,14 +98,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Create a button
-	HWND hButtonLogin = CreateWindowEx(0, _T("BUTTON"), _T("Login"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+	HWND hButtonLogin = CreateWindowEx(0, _T("BUTTON"), _T("LoginA"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		230, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(3), hInstance, nullptr);
-	if (!hButtonCall)
+	if (!hButtonLogin)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
 
+	// Create a button
+	HWND hButtonLogin2 = CreateWindowEx(0, _T("BUTTON"), _T("LoginB"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		340, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
+	if (!hButtonLogin2)
+	{
+		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
+		return 1;
+	}
 
 	// Create the child window
 	hChildWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
@@ -102,7 +124,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MessageBox(hMainWindow, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
+	g_mainWindow = hMainWindow;
 	g_childWindow = hChildWindow;
+
+	socketClient->Connect(hMainWindow);
 
 	// Show and update the main window
 	ShowWindow(hMainWindow, SW_MAXIMIZE);
@@ -142,26 +167,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						webview->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/login.html");
 						
 						EventRegistrationToken token;
-						// <NavigationEvents>
-						// Step 4 - Navigation events
-						// register an ICoreWebView2NavigationStartingEventHandler to cancel any non-https navigation
-/*
-						webview->add_NavigationStarting(Callback<ICoreWebView2NavigationStartingEventHandler>(
-							[](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
-								wil::unique_cotaskmem_string uri;
-								args->get_Uri(&uri);
-								std::wstring source(uri.get());
-								if (source.substr(0, 5) != L"https") {
-									args->put_Cancel(true);
-								}
-								return S_OK;
-							}).Get(), &token);
-*/
-						// </NavigationEvents>
-
-						// <Scripting>
-						// Step 5 - Scripting
-						// Schedule an async task to add initialization script that freezes the Object object
 						webview->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
 						// Schedule an async task to get the document URL
 						webview->ExecuteScript(L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
@@ -202,11 +207,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return static_cast<int>(msg.wParam);
 }
 
-
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	const char* message;
+	std::wstring wideMessage;
+	int length;
 	switch (msg)
 	{
+	case WM_SOCKET_MESSAGE:
+		message = reinterpret_cast<const char*>(lParam);
+		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
+		wideMessage.resize(length);
+		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
+
+		MessageBox(hWnd, wideMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
@@ -225,7 +240,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ShowWindow(hChildWnd2, SW_SHOW);
 			UpdateWindow(hChildWnd2);
 		}
-		else if (LOWORD(wParam) == 2)
+		else if (LOWORD(wParam) == 2) //call
 		{
 			HWND hChildWnd2 = CreateWindowEx(0, _T("ChildWindowClass"), _T("Call Menu"), WS_OVERLAPPEDWINDOW,
 				CW_USEDEFAULT, CW_USEDEFAULT, 800, 200, nullptr, nullptr, g_hInstance, nullptr);
@@ -290,8 +305,46 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 										// Convert std::wstring to std::string
 										std::string sstr(wstr.begin(), wstr.end());
 
-										if (sstr == "call_start") {
-											socketComm->SendMessageW("{\"command\": \"INVITE\",\"contents\" : {\"uuid\": \"src_uuid\",\"target\" : \"dst_contact_id\"}}");
+										json11::Json inviteJson = json11::Json::object{
+											{"command", "INVITE"},
+											{"contents", json11::Json::object {
+													{"uuid", uuidString},
+													{"target", destUserString}
+												}
+											}
+										};
+
+										if (sstr == "call_start") // ui call button is clicked.
+										{ 
+											// send inviteJson message to server.
+											//socketComm->SendMessageW(inviteJson.dump());
+											socketClient->SendMessageW(inviteJson.dump());
+
+											// wait for cancel or accept from server.
+											//std::string inviteResponse = socketComm->ReceiveResponse();
+											
+											/*
+											std::string errStr;
+											const auto inviteResponseJson = json11::Json::parse(inviteResponse, errStr);
+
+											std::string command = inviteResponseJson["command"].string_value();
+											if (command == "ACCEPT") {
+												std::string contentsJsonString = inviteResponseJson["contents"].dump();
+												const auto contentsJson = json11::Json::parse(contentsJsonString, errStr);
+												std::string uuid = contentsJson["uuid"].string_value();
+												std::string callId = contentsJson["callid"].string_value();
+
+												MessageBox(g_mainWindow, _T("call is accepted"), _T("info"), MB_ICONERROR | MB_OK);
+											}
+											else {
+												std::string contentsJsonString = inviteResponseJson["contents"].dump();
+												const auto contentsJson = json11::Json::parse(contentsJsonString, errStr);
+												std::string uuid = contentsJson["uuid"].string_value();
+												std::string callId = contentsJson["callid"].string_value();
+
+												MessageBox(g_mainWindow, _T("call is not accepted"), _T("info"), MB_ICONERROR | MB_OK);
+											}
+											*/
 										}
 
 										return S_OK;
@@ -302,14 +355,75 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						return S_OK;
 					}).Get());
 		}
-		else if (LOWORD(wParam) == 3) {
-			socketComm->SendMessageW(std::string("{\"command\": \"LOGIN\",\"contents\" : {\"email\" : \"aaa@gmail.com\",\"password\" : \"1234\"}}"));
-			std::string res = socketComm->ReceiveResponse();
+		else if (LOWORD(wParam) == 3) // login
+		{
+			json11::Json loginJson = json11::Json::object{
+				{"command", "LOGIN"},
+				{"contents",json11::Json::object{
+						{"email", "aaa@gmail.com"},
+						{"password", "1234"}
+					}
+				}
+			};
+
+			std::string loginJsonStr = loginJson.dump();
+			//socketComm->SendMessageW(loginJsonStr);
+			socketClient->SendMessageW(loginJsonStr);
+
+//			std::string res = socketComm->ReceiveResponse();
+
+			/*
+			std::string err;
+			const auto json = json11::Json::parse(res, err);
 			
 			std::wstring wstr(res.begin(), res.end());
-			MessageBox(hWnd, wstr.c_str(), _T("Error"), MB_ICONERROR | MB_OK);
+			MessageBox(hWnd, wstr.c_str(), _T("return value"), MB_ICONERROR | MB_OK);
+
+			std::string contentsJsonStr = json["contents"].dump();
+			const auto contentsJson = json11::Json::parse(contentsJsonStr, err);
+
+			std::string uuidStr = contentsJson["uuid"].string_value();
+
+			std::wstring uuidWS(uuidStr.begin(), uuidStr.end());
+			MessageBox(hWnd, uuidWS.c_str(), _T("uuid"), MB_ICONERROR | MB_OK);
+			uuidString = uuidStr;
+			*/
 			
 		}
+		else if (LOWORD(wParam) == 4) // login B
+		{
+			json11::Json loginJson = json11::Json::object{
+				{"command", "LOGIN"},
+				{"contents",json11::Json::object{
+						{"email", "bbb@gmail.com"},
+						{"password", "1234"}
+					}
+				}
+			};
+
+			std::string loginJsonStr = loginJson.dump();
+			//socketComm->SendMessageW(loginJsonStr);
+			socketClient->SendMessageW(loginJsonStr);
+//			std::string res = socketComm->ReceiveResponse();
+			/*
+			std::string err;
+			const auto json = json11::Json::parse(res, err);
+
+			std::wstring wstr(res.begin(), res.end());
+			MessageBox(hWnd, wstr.c_str(), _T("return value"), MB_ICONERROR | MB_OK);
+
+			std::string contentsJsonStr = json["contents"].dump();
+			const auto contentsJson = json11::Json::parse(contentsJsonStr, err);
+
+			std::string uuidStr = contentsJson["uuid"].string_value();
+
+			std::wstring uuidWS(uuidStr.begin(), uuidStr.end());
+			MessageBox(hWnd, uuidWS.c_str(), _T("uuid"), MB_ICONERROR | MB_OK);
+
+			uuidStringB = uuidStr;
+			*/
+		}
+
 		break;
 
 

@@ -221,7 +221,9 @@
     <ClCompile Include="MultiMediaReceiver.cpp" />
     <ClCompile Include="MultiMediaSender.cpp" />
     <ClCompile Include="Multimedia_Manager.cpp" />
+    <ClCompile Include="socketClient.cpp" />
     <ClCompile Include="SocketCommunication.cpp" />
+    <ClCompile Include="json11.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="CallUI.htm">
@@ -237,11 +239,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common.h" />
+    <ClInclude Include="json11.hpp" />
     <ClInclude Include="MultiMediaReceiver.h" />
     <ClInclude Include="MultiMediaSender.h" />
     <ClInclude Include="Multimedia_Manager.h" />
     <ClInclude Include="MultiMediaInterface.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="socketClient.h" />
     <ClInclude Include="SocketCommunication.h" />
   </ItemGroup>
   <ItemGroup>
