@@ -88,15 +88,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// Create a button
-	HWND hButtonCall = CreateWindowEx(0, _T("BUTTON"), _T("Call Menu"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(2), hInstance, nullptr);
-	if (!hButtonCall)
-	{
-		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
-		return 1;
-	}
-
 	// Create the login window
 	hLoginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, 600, 600, hMainWindow, nullptr, hInstance, nullptr);
@@ -146,6 +137,9 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	std::string contentsJsonString;
 	json11::Json contentsJson;
 	int length;
+	std::string targetEmail;
+	std::string targetUuid;
+
 	switch (msg)
 	{
 	case WM_SOCKET_MESSAGE:
@@ -211,6 +205,18 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		
 		break;
 	case WM_CONTACT_MESSAGE:
+		message = reinterpret_cast<const char*>(lParam);
+		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
+		wideMessage.resize(length);
+		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
+
+		stdMessage = std::string(message);
+		receiveJson = json11::Json::parse(stdMessage, errorMessage);
+		targetEmail = receiveJson["email"].string_value();
+		targetUuid = receiveJson["uuid"].string_value();
+
+		//todo: activate a call ui window and send invite and show outgoing ui
+
 		MessageBox(hWnd, _T("message from contact"), _T("info"), MB_ICONERROR | MB_OK);
 		break;
 	case WM_DESTROY:
@@ -238,6 +244,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			contactsListWindow->startWebview(g_contactWindow);
 
 		}
+		/*
 		else if (LOWORD(wParam) == 2) //call
 		{
 			HWND hChildWnd2 = CreateWindowEx(0, _T("ChildWindowClass"), _T("Call Menu"), WS_OVERLAPPEDWINDOW,
@@ -353,6 +360,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						return S_OK;
 					}).Get());
 		}
+		*/
 		break;
 
 
