@@ -20,7 +20,7 @@ bool SocketClient::Connect(HWND mainWindow) {
     // 소켓 생성
     m_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (m_socket == INVALID_SOCKET) {
-        //Cleanup();
+        WSACleanup();
         return false;
     }
 
@@ -32,7 +32,7 @@ bool SocketClient::Connect(HWND mainWindow) {
 
     // 서버에 연결
     if (connect(m_socket, (sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
-        //Cleanup();
+        WSACleanup();
         return false;
     }
 

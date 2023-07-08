@@ -44,10 +44,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hMainWindow;
 	HWND hChildWindow;
 
-	//socketComm->Start();
-//	socketClient->Connect(hMainWindow);
-	//socketComm->ReceiveResponse();
-
 	// Store the instance handle
 	g_hInstance = hInstance;
 
@@ -71,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Create the main window
 	hMainWindow = CreateWindowEx(0, _T("MainWindowClass"), _T("Main Window"), WS_OVERLAPPEDWINDOW,
-		0, 0, 0, 0, nullptr, nullptr, hInstance, nullptr);
+		0, 0, 800, 600, nullptr, nullptr, hInstance, nullptr);
 	
 	if (!hMainWindow)
 	{
@@ -97,7 +93,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// Create a button
+	// Create a login A button
 	HWND hButtonLogin = CreateWindowEx(0, _T("BUTTON"), _T("LoginA"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		230, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(3), hInstance, nullptr);
 	if (!hButtonLogin)
@@ -106,7 +102,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// Create a button
+	// Create a login B button
 	HWND hButtonLogin2 = CreateWindowEx(0, _T("BUTTON"), _T("LoginB"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		340, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
 	if (!hButtonLogin2)
@@ -137,6 +133,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(hChildWindow, nCmdShow);
 	UpdateWindow(hChildWindow);
 
+
+	// show login webview
 	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
 		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
 			[hChildWindow](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
@@ -185,6 +183,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								wil::unique_cotaskmem_string message;
 								args->TryGetWebMessageAsString(&message);
 								//processMessage(&message);
+
+								// ToDo
+								// receive uuid from login window and save it to uuid variable
+
 								MessageBox(g_childWindow, message.get(), _T("Error"), MB_ICONERROR | MB_OK);
 								SendMessage(g_childWindow, WM_CLOSE, 0, 0);
 								webview->PostWebMessageAsString(message.get());
@@ -211,6 +213,13 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	const char* message;
 	std::wstring wideMessage;
+	std::string stdMessage;
+	std::string errorMessage;
+	json11::Json receiveJson;
+	std::string command;
+	std::string response;
+	std::string contentsJsonString;
+	json11::Json contentsJson;
 	int length;
 	switch (msg)
 	{
@@ -220,9 +229,75 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		wideMessage.resize(length);
 		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
 
-		MessageBox(hWnd, wideMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
+		stdMessage = std::string(message);
+		receiveJson = json11::Json::parse(stdMessage, errorMessage);
+		command = receiveJson["command"].string_value();
+		response = receiveJson["response"].string_value();
+		contentsJsonString = receiveJson["contents"].dump();
+		contentsJson = json11::Json::parse(contentsJsonString, errorMessage);
+
+		if (command == "INVITE")
+		{
+			std::string id;
+			id = contentsJson["contact_id"].string_value();
+
+			// Todo: create a call receive window
+			MessageBox(hWnd, _T("incomming call"), _T("info"), MB_ICONERROR | MB_OK);
+
+		}
+		else if (command == "LOGIN") 
+		{
+			if (response == "OK") 
+			{
+				MessageBox(hWnd, _T("welcome!"), _T("info"), MB_ICONERROR | MB_OK);
+				uuidString = contentsJson["uuid"].string_value();
+			}
+			else
+			{
+				MessageBox(hWnd, _T("fail to login"), _T("info"), MB_ICONERROR | MB_OK);
+			}
+		}
+		else if (command == "CANCEL")
+		{
+			if (response == "NOT AVAILABLE")
+			{
+				MessageBox(hWnd, _T("Callee is not available."), _T("info"), MB_ICONERROR | MB_OK);
+				// Todo: close call menu
+			}
+			else if (response == "BUSY")
+			{
+				MessageBox(hWnd, _T("Callee is busy."), _T("info"), MB_ICONERROR | MB_OK);
+				// Todo: close call menu
+			}
+		}
+		else if (command == "ACCEPT")
+		{
+			std::string uuid;
+			std::string callId;
+			uuid = contentsJson["uuid"].string_value();
+			callId = contentsJson["callid"].string_value();
+
+			// Todo: close call window and send information to media controller
+		}
+		
+
+
+
+		// login completed / failure => idle state
+		// 
+		// call invite request => calling state
+		//							success => call state 
+		//                          busy => idle state
+		// 
+		// invited call => ok => call state
+		//                 nok => idle state
+
+
+
+
 		break;
 	case WM_DESTROY:
+		socketClient->Disconnect();
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
@@ -355,7 +430,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						return S_OK;
 					}).Get());
 		}
-		else if (LOWORD(wParam) == 3) // login
+		else if (LOWORD(wParam) == 3) // login A
 		{
 			json11::Json loginJson = json11::Json::object{
 				{"command", "LOGIN"},
@@ -367,7 +442,6 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			};
 
 			std::string loginJsonStr = loginJson.dump();
-			//socketComm->SendMessageW(loginJsonStr);
 			socketClient->SendMessageW(loginJsonStr);
 
 //			std::string res = socketComm->ReceiveResponse();
