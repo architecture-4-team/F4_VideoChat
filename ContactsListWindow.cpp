@@ -1,17 +1,20 @@
-#include "LoginWindow.h"
+#include "ContactsListWindow.h"
+#include "common.h"
 
-HWND g_handle;
-SocketClient* g_socketClient;
+HWND g_contact_handle;
+HWND g_contact_main_handle;
+SocketClient* g_contact_socketClient;
 
-LoginWindow::LoginWindow(HWND window, SocketClient* socket)
+ContactListWindow::ContactListWindow(HWND window, SocketClient* socket, HWND mainWindow)
 {
 	hWindow = window;
-	g_socketClient = socket;
+	g_contact_socketClient = socket;
+	g_contact_main_handle = mainWindow;
 };
 
-void LoginWindow::startWebview(HWND gWindow)
+void ContactListWindow::startWebview(HWND gWindow)
 {
-	g_handle = gWindow;
+	g_contact_handle = gWindow;
 	HWND lWindow = hWindow;
 	// show login webview
 	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
@@ -22,14 +25,14 @@ void LoginWindow::startWebview(HWND gWindow)
 				env->CreateCoreWebView2Controller(lWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 					[lWindow](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 						if (controller != nullptr) {
-							webviewController2 = controller;
-							webviewController2->get_CoreWebView2(&webview2);
+							webviewControllerContact = controller;
+							webviewControllerContact->get_CoreWebView2(&webviewContact);
 						}
 
 						// Add a few settings for the webview
 						// The demo step is redundant since the values are the default settings
 						wil::com_ptr<ICoreWebView2Settings> settings;
-						webview2->get_Settings(&settings);
+						webviewContact->get_Settings(&settings);
 						settings->put_IsScriptEnabled(TRUE);
 						settings->put_AreDefaultScriptDialogsEnabled(TRUE);
 						settings->put_IsWebMessageEnabled(TRUE);
@@ -37,14 +40,14 @@ void LoginWindow::startWebview(HWND gWindow)
 						// Resize WebView to fit the bounds of the parent window
 						RECT bounds;
 						GetClientRect(lWindow, &bounds);
-						webviewController2->put_Bounds(bounds);
+						webviewControllerContact->put_Bounds(bounds);
 
-						webview2->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/login.html");
+						webviewContact->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/contacts.html");
 
 						EventRegistrationToken token;
-						webview2->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
+						webviewContact->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
 						// Schedule an async task to get the document URL
-						webview2->ExecuteScript(L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+						webviewContact->ExecuteScript(L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
 							[](HRESULT errorCode, LPCWSTR resultObjectAsJson) -> HRESULT {
 								LPCWSTR URL = resultObjectAsJson;
 								//doSomethingWithURL(URL);
@@ -54,44 +57,31 @@ void LoginWindow::startWebview(HWND gWindow)
 						// <CommunicationHostWeb>
 						// Step 6 - Communication between host and web content
 						// Set an event handler for the host to return received message back to the web content
-						webview2->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+						webviewContact->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
 							[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
 								wil::unique_cotaskmem_string message;
 								args->TryGetWebMessageAsString(&message);
-								//processMessage(&message);
-								json11::Json loginJson;
 
-								if (message.get() == L"loginA_cliked") {
-									loginJson = json11::Json::object{
-										{"command", "LOGIN"},
-										{"contents",json11::Json::object{
-												{"email", "aaa@gmail.com"},
-												{"password", "1234"}
-											}
-										}
-									};
+								int length = WideCharToMultiByte(CP_UTF8, 0, message.get(), -1, nullptr, 0, nullptr, nullptr);
+								char* buffer = new char[length];
+								WideCharToMultiByte(CP_UTF8, 0, message.get(), -1, buffer, length, nullptr, nullptr);
+								std::string messgeJsonStr(buffer);
+
+								std::string errorMessage;
+								json11::Json messageJson = json11::Json::parse(messgeJsonStr, errorMessage);
+
+								MessageBox(g_contact_handle, message.get(), _T("info"), MB_ICONERROR | MB_OK);
+
+								if (messageJson["action"] == "call") {
+									//send event to main window to activate a call window
+									PostMessage(g_contact_main_handle, WM_CONTACT_MESSAGE, 0, (LPARAM)buffer);
 								}
-								else 
+								else
 								{
-									loginJson = json11::Json::object{
-										{"command", "LOGIN"},
-										{"contents",json11::Json::object{
-												{"email", "aaa@gmail.com"},
-												{"password", "1234"}
-											}
-										}
-									};
-
+									//toDo, the other action ??
 								}
-
-								std::string loginJsonStr = loginJson.dump();
-								g_socketClient->SendMessageW(loginJsonStr);
-
-								// ToDo
-								// receive uuid from login window and save it to uuid variable
-
-								SendMessage(g_handle, WM_CLOSE, 0, 0);
-								webview->PostWebMessageAsString(message.get());
+								delete[] buffer;
+								SendMessage(g_contact_handle, WM_CLOSE, 0, 0);
 								return S_OK;
 							}).Get(), &token);
 
@@ -100,4 +90,4 @@ void LoginWindow::startWebview(HWND gWindow)
 				return S_OK;
 			}).Get());
 }
-	
+

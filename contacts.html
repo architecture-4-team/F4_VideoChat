@@ -10,10 +10,10 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <button id="loginButtonA" class="btn btn-primary btn-lg btn-block w-100">login A</button>
+                        <button id="callToA" class="btn btn-primary btn-lg btn-block w-100">Call to A</button>
                     </div>
                     <div class="col-md-6">
-                        <button id="loginButtonB" class="btn btn-primary btn-lg btn-block w-100">login B</button>
+                        <button id="callToB" class="btn btn-primary btn-lg btn-block w-100">Call to B</button>
                     </div>
                 </div>
             </div>
@@ -26,18 +26,29 @@
     <!-- Custom Script -->
     <script>
         // Get the button elements
-        var loginButtonA = document.getElementById("loginButtonA");
-        var loginButtonB = document.getElementById("loginButtonB");
+        var callToA = document.getElementById("callToA");
+        var callToB = document.getElementById("callToB");
 
+        var jsonCallToA = {
+            action: "call",
+            email: "aaa@gmail.com",
+            uuid: "aaaaaaaaaaaaaaaa"
+        }
+
+        var jsonCallToB = {
+            action: "call",
+            email: "bbb@gmail.com",
+            uuid: "bbbbbbbbbbbbbbbb"
+        }
 
         // Add a click event listener to the loginButton
-        loginButtonA.addEventListener("click", function () {
-            window.chrome.webview.postMessage(`loginA_cliked`);
+        callToA.addEventListener("click", function () {
+            window.chrome.webview.postMessage(JSON.stringify(jsonCallToA));
         });
 
         // Add a click event listener to the endButton
-        loginButtonB.addEventListener("click", function () {
-            window.chrome.webview.postMessage(`loginB_cliked`);
+        callToB.addEventListener("click", function () {
+            window.chrome.webview.postMessage(JSON.stringify(jsonCallToB));
         });
     </script>
 </body>

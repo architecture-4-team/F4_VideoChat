@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="html">
+      <UniqueIdentifier>{d972e79b-0140-4f94-af43-48d1b7a556a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="F4Main.cpp">
@@ -39,12 +42,21 @@
     <ClCompile Include="LoginWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ContactsListWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="html1.htm" />
     <None Include="login.html">
-      <Filter>Source Files</Filter>
+      <Filter>html</Filter>
+    </None>
+    <None Include="..\callMenu\call.html">
+      <Filter>html</Filter>
+    </None>
+    <None Include="contacts.html">
+      <Filter>html</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +88,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LoginWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ContactsListWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
