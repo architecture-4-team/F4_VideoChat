@@ -11,8 +11,10 @@
 #include "resource.h"
 #include "json11.hpp"
 #include "common.h"
+#include "LoginWindow.h"
 
 using namespace Microsoft::WRL;
+
 // Pointer to WebViewController
 static wil::com_ptr<ICoreWebView2Controller> webviewController;
 
@@ -29,7 +31,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 //SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
 SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 
-HWND g_childWindow;
+HWND g_loginWindow;
 HWND g_mainWindow;
 
 std::string uuidString = "";
@@ -42,7 +44,7 @@ std::string destUserStringB = "aaa@gmail.com";
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
-	HWND hChildWindow;
+	HWND hLoginWindow;
 
 	// Store the instance handle
 	g_hInstance = hInstance;
@@ -111,17 +113,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// Create the child window
-	hChildWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
+	// Create the login window
+	hLoginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, 600, 600, hMainWindow, nullptr, hInstance, nullptr);
 
-	if (!hChildWindow)
+	if (!hLoginWindow)
 	{
 		MessageBox(hMainWindow, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
 	g_mainWindow = hMainWindow;
-	g_childWindow = hChildWindow;
+	g_loginWindow = hLoginWindow;
 
 	socketClient->Connect(hMainWindow);
 
@@ -130,74 +132,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UpdateWindow(hMainWindow);
 
 	// Show and update the main window
-	ShowWindow(hChildWindow, nCmdShow);
-	UpdateWindow(hChildWindow);
+	ShowWindow(hLoginWindow, nCmdShow);
+	UpdateWindow(hLoginWindow);
 
 
-	// show login webview
-	CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
-		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-			[hChildWindow](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+	LoginWindow* loginWindow = new LoginWindow(hLoginWindow);
+	loginWindow->startWebview(g_mainWindow);
 
-				// Create a CoreWebView2Controller and get the associated CoreWebView2 whose parent is the main window hWnd
-				env->CreateCoreWebView2Controller(hChildWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-					[hChildWindow](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
-						if (controller != nullptr) {
-							webviewController = controller;
-							webviewController->get_CoreWebView2(&webview);
-						}
-
-						// Add a few settings for the webview
-						// The demo step is redundant since the values are the default settings
-						wil::com_ptr<ICoreWebView2Settings> settings;
-						webview->get_Settings(&settings);
-						settings->put_IsScriptEnabled(TRUE);
-						settings->put_AreDefaultScriptDialogsEnabled(TRUE);
-						settings->put_IsWebMessageEnabled(TRUE);
-
-						// Resize WebView to fit the bounds of the parent window
-						RECT bounds;
-						GetClientRect(hChildWindow, &bounds);
-						webviewController->put_Bounds(bounds);
-
-						// Schedule an async task to navigate to Bing
-						//webview->Navigate(L"http://www.google.com");
-						webview->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/login.html");
-						
-						EventRegistrationToken token;
-						webview->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
-						// Schedule an async task to get the document URL
-						webview->ExecuteScript(L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-							[](HRESULT errorCode, LPCWSTR resultObjectAsJson) -> HRESULT {
-								LPCWSTR URL = resultObjectAsJson;
-								//doSomethingWithURL(URL);
-								return S_OK;
-							}).Get());
-						// </Scripting>
-
-						// <CommunicationHostWeb>
-						// Step 6 - Communication between host and web content
-						// Set an event handler for the host to return received message back to the web content
-						webview->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-							[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
-								wil::unique_cotaskmem_string message;
-								args->TryGetWebMessageAsString(&message);
-								//processMessage(&message);
-
-								// ToDo
-								// receive uuid from login window and save it to uuid variable
-
-								MessageBox(g_childWindow, message.get(), _T("Error"), MB_ICONERROR | MB_OK);
-								SendMessage(g_childWindow, WM_CLOSE, 0, 0);
-								webview->PostWebMessageAsString(message.get());
-								return S_OK;
-							}).Get(), &token);
-
-						return S_OK;
-					}).Get());
-				return S_OK;
-			}).Get());
-
+		
 	// Message loop
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
