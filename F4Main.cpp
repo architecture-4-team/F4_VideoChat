@@ -14,6 +14,8 @@
 #include "LoginWindow.h"
 #include "ContactsListWindow.h"
 #include "OutgoingCallWindow.h"
+#include <mmsystem.h>
+#include "IncommingCallWindow.h"
 
 using namespace Microsoft::WRL;
 
@@ -37,18 +39,19 @@ HWND g_loginWindow;
 HWND g_mainWindow;
 HWND g_contactWindow;
 HWND g_callWindow;
+HWND g_inCallWindow;
 
 std::string uuidString = "";
 std::string emailString = "";
 
 OutgoingCallWindow* outGoingCallWindow;
+IncommingCallWindow* incommingCallWindow;
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
 	HWND hLoginWindow;
-	HWND hOutGoingCallWindow;
 
 	// Store the instance handle
 	g_hInstance = hInstance;
@@ -144,6 +147,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	std::string targetEmail;
 	std::string targetUuid;
 	std::wstring wsEmail;
+	json11::Json inviteJson;
 
 	switch (msg)
 	{
@@ -162,11 +166,26 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		if (command == "INVITE")
 		{
-			std::string id;
-			id = contentsJson["contact_id"].string_value();
+			std::string callerEmail;
+			callerEmail = contentsJson["email"].string_value();
 
 			// Todo: create a call receive window
-			MessageBox(hWnd, _T("incomming call"), _T("info"), MB_ICONERROR | MB_OK);
+			// MessageBox(hWnd, _T("incomming call"), _T("info"), MB_ICONERROR | MB_OK);
+
+			// create incomming call window
+			g_inCallWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Incomming Call Window"), WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, g_hInstance, nullptr);
+			if (!g_inCallWindow)
+			{
+				MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
+				return 1;
+			}
+
+			ShowWindow(g_inCallWindow, SW_SHOW);
+			UpdateWindow(g_inCallWindow);
+
+			incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow, callerEmail, uuidString, emailString);
+			incommingCallWindow->startWebview(g_inCallWindow);
 
 		}
 		else if (command == "LOGIN") 
@@ -221,7 +240,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		targetEmail = receiveJson["email"].string_value();
 		targetUuid = receiveJson["uuid"].string_value();
 
-		uuidString = targetUuid;
+		//uuidString = targetUuid; //todo: we have to change of return value of login request.
 		emailString = targetEmail;
 
 		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
@@ -245,9 +264,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		MessageBox(hWnd, wsEmail.c_str(), _T("message from contact"), MB_ICONERROR | MB_OK);
 
-		//todo: activate a call ui window and send invite and show outgoing ui
-		// Show the child window
-			// create outgoing call window
+		// create outgoing call window
 		g_callWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Calling Window"), WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, g_hInstance, nullptr);
 		if (!g_callWindow)
@@ -261,6 +278,18 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString);
 		outGoingCallWindow->startWebview(g_callWindow);
+
+		// send invite to server
+		inviteJson = json11::Json::object{
+			{"command", "INVITE"},
+			{"contents", json11::Json::object {
+				{"uuid", uuidString},
+				{"target", targetEmail}}
+			}
+		};
+
+		socketClient->SendMessageW(inviteJson.dump());
+
 		break;
 
 	case WM_DESTROY:

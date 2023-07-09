@@ -85,7 +85,7 @@ void LoginWindow::startWebview(HWND gWindow)
 									loginJson = json11::Json::object{
 										{"command", "LOGIN"},
 										{"contents",json11::Json::object{
-												{"email", "aaa@gmail.com"},
+												{"email", "bbb@gmail.com"},
 												{"password", "1234"}
 											}
 										}

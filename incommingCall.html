@@ -24,6 +24,16 @@
             margin-top: 10px;
         }
 
+        .button-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .accept-button {
+            margin-right: 10px;
+        }
+
         .reject-button {
         }
 
@@ -44,15 +54,20 @@
 </head>
 <body>
     <div class="msg">
-        Call to <span id="callee"></span> ...
+        Call from <span id="caller"></span> ...
     </div>
 
     <div class="phone-icon">
         <i class="fas fa-phone"></i>
     </div>
 
-    <div class="reject-button">
-        <button id="stop-btn" class="btn btn-danger btn-lg">Stop</button>
+    <div class="button-row">
+        <div class="accept-button">
+            <button id="call-btn" class="btn btn-success btn-lg">Answer</button>
+        </div>
+        <div class="reject-button">
+            <button id="reject-btn" class="btn btn-danger btn-lg">Reject</button>
+        </div>
     </div>
 
     <!-- 전화 발신 소리 재생을 위한 오디오 요소 -->
@@ -63,16 +78,11 @@
     </audio>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var audio = document.getElementById("ringtone");
-            audio.play();
-        });
-
         window.chrome.webview.addEventListener('message', arg => {
             jsonObj = JSON.parse(arg.data);
             if (jsonObj.email) {
                 document.getElementById('ringtone').play();
-                document.getElementById('callee').textContent = jsonObj.email;
+                document.getElementById('caller').textContent = jsonObj.email;
             }
             if (jsonObj.sound && jsonObj.sound === 'start') {
                 document.getElementById('ringtone').play();
@@ -80,8 +90,12 @@
         });
 
         // Add a click event listener to stop button
-        document.getElementById("stop-btn").addEventListener("click", function () {
-            window.chrome.webview.postMessage(`stop_call`);
+        document.getElementById("call-btn").addEventListener("click", function () {
+            window.chrome.webview.postMessage(`accept_call`);
+        });
+
+        document.getElementById("reject-btn").addEventListener("click", function () {
+            window.chrome.webview.postMessage(`reject_call`);
         });
 
         window.chrome.webview.postMessage(`complete_loading`);
