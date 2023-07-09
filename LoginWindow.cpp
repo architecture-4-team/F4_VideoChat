@@ -1,12 +1,16 @@
 #include "LoginWindow.h"
+#include "common.h"
 
 HWND g_handle;
+HWND g_mainHandle;
 SocketClient* g_socketClient;
+char loginBuffer[1024];
 
-LoginWindow::LoginWindow(HWND window, SocketClient* socket)
+LoginWindow::LoginWindow(HWND window, SocketClient* socket, HWND mainWindow)
 {
 	hWindow = window;
 	g_socketClient = socket;
+	g_mainHandle = mainWindow;
 };
 
 void LoginWindow::startWebview(HWND gWindow)
@@ -58,10 +62,12 @@ void LoginWindow::startWebview(HWND gWindow)
 							[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
 								wil::unique_cotaskmem_string message;
 								args->TryGetWebMessageAsString(&message);
+
+
 								//processMessage(&message);
 								json11::Json loginJson;
 
-								if (message.get() == L"loginA_cliked") {
+								if (wcscmp(message.get(), L"loginA_cliked") == 0) {
 									loginJson = json11::Json::object{
 										{"command", "LOGIN"},
 										{"contents",json11::Json::object{
@@ -70,8 +76,11 @@ void LoginWindow::startWebview(HWND gWindow)
 											}
 										}
 									};
+
+									std::string loginJsonStr = loginJson.dump();
+									g_socketClient->SendMessageW(loginJsonStr);
 								}
-								else 
+								else if (wcscmp(message.get(), L"loginB_cliked") == 0)
 								{
 									loginJson = json11::Json::object{
 										{"command", "LOGIN"},
@@ -81,17 +90,33 @@ void LoginWindow::startWebview(HWND gWindow)
 											}
 										}
 									};
-
+									std::string loginJsonStr = loginJson.dump();
+									g_socketClient->SendMessageW(loginJsonStr);
 								}
+								else
+								{
+									int length = WideCharToMultiByte(CP_UTF8, 0, message.get(), -1, nullptr, 0, nullptr, nullptr);
+									WideCharToMultiByte(CP_UTF8, 0, message.get(), -1, loginBuffer, length, nullptr, nullptr);
+									std::string messgeJsonStr(loginBuffer);
+									std::string errorMessage;
+									json11::Json messageJson = json11::Json::parse(messgeJsonStr, errorMessage);
 
-								std::string loginJsonStr = loginJson.dump();
-								g_socketClient->SendMessageW(loginJsonStr);
+									MessageBox(g_handle, message.get(), _T("info"), MB_ICONERROR | MB_OK);
+
+									if (messageJson["action"] == "login_complete") {
+										//send event to main window to activate a call window
+										PostMessage(g_mainHandle, WM_LOGON_COMPLETED_MESSAGE, 0, (LPARAM)loginBuffer);
+									}
+									else
+									{
+										//toDo, the other action ??
+									}
+									SendMessage(g_handle, WM_CLOSE, 0, 0);
+								}
 
 								// ToDo
 								// receive uuid from login window and save it to uuid variable
 
-								SendMessage(g_handle, WM_CLOSE, 0, 0);
-								webview->PostWebMessageAsString(message.get());
 								return S_OK;
 							}).Get(), &token);
 

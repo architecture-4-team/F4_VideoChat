@@ -217,6 +217,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="OutgoingCallWindow.cpp" />
     <ClCompile Include="ContactsListWindow.cpp" />
     <ClCompile Include="F4Main.cpp" />
     <ClCompile Include="LoginWindow.cpp" />
@@ -228,23 +229,25 @@
     <ClCompile Include="json11.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="CallUI.htm">
-      <DeploymentContent>true</DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </CopyFileToFolders>
-    <None Include="..\callMenu\call.html" />
     <None Include="html1.htm">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="contacts.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="imcommingCall.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="login.html">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="outgoingCall.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OutgoingCallWindow.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ContactsListWindow.h" />
     <ClInclude Include="json11.hpp" />

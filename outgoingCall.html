@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>전화 거는 아이콘</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        /* 스타일링을 위한 CSS */
+        html, body {
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .phone-icon {
+            font-size: 80px;
+            animation: phone-ring 2s infinite;
+        }
+
+        .msg {
+            font-size: 24px;
+            margin-top: 10px;
+        }
+
+        .reject-button {
+        }
+
+        @keyframes phone-ring {
+            0% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(-10px);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="msg">
+        Call to <span id="callee"></span> ...
+    </div>
+
+    <div class="phone-icon">
+        <i class="fas fa-phone"></i>
+    </div>
+
+    <div class="reject-button">
+        <button id="stop-btn" class="btn btn-danger btn-lg">Stop</button>
+    </div>
+
+    <!-- 전화 발신 소리 재생을 위한 오디오 요소 -->
+    <audio id="ringtone" preload="auto">
+        <source src="outcallsound.wav" type="audio/wav">
+        <!-- fallback 메시지 -->
+        브라우저가 오디오 요소를 지원하지 않습니다.
+    </audio>
+
+    <script>
+        window.chrome.webview.addEventListener('message', arg => {
+            jsonObj = JSON.parse(arg.data);
+            if (jsonObj.email) {
+                document.getElementById('ringtone').play();
+                document.getElementById('callee').textContent = jsonObj.email;
+            }
+            if (jsonObj.sound && jsonObj.sound === 'start') {
+                document.getElementById('ringtone').play();
+            }
+        });
+
+        // Add a click event listener to stop button
+        document.getElementById("stop-btn").addEventListener("click", function () {
+            window.chrome.webview.postMessage(`stop_call`);
+        });
+
+        window.chrome.webview.postMessage(`complete_loading`);
+
+    </script>
+
+    <!-- 필요한 경우 아래의 스크립트 태그를 사용하여 Font Awesome 라이브러리를 로드합니다. -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script> -->
+</body>
+</html>

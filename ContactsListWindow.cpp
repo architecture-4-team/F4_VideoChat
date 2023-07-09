@@ -4,6 +4,7 @@
 HWND g_contact_handle;
 HWND g_contact_main_handle;
 SocketClient* g_contact_socketClient;
+char buffer[1024];
 
 ContactListWindow::ContactListWindow(HWND window, SocketClient* socket, HWND mainWindow)
 {
@@ -63,8 +64,11 @@ void ContactListWindow::startWebview(HWND gWindow)
 								args->TryGetWebMessageAsString(&message);
 
 								int length = WideCharToMultiByte(CP_UTF8, 0, message.get(), -1, nullptr, 0, nullptr, nullptr);
-								char* buffer = new char[length];
+
+//								char buffer[1024];
+//								char* buffer = new char[length];
 								WideCharToMultiByte(CP_UTF8, 0, message.get(), -1, buffer, length, nullptr, nullptr);
+
 								std::string messgeJsonStr(buffer);
 
 								std::string errorMessage;
@@ -80,8 +84,9 @@ void ContactListWindow::startWebview(HWND gWindow)
 								{
 									//toDo, the other action ??
 								}
-								delete[] buffer;
 								SendMessage(g_contact_handle, WM_CLOSE, 0, 0);
+
+//								free(buffer);
 								return S_OK;
 							}).Get(), &token);
 

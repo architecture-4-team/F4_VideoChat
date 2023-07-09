@@ -13,6 +13,7 @@
 #include "common.h"
 #include "LoginWindow.h"
 #include "ContactsListWindow.h"
+#include "OutgoingCallWindow.h"
 
 using namespace Microsoft::WRL;
 
@@ -35,18 +36,19 @@ SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 HWND g_loginWindow;
 HWND g_mainWindow;
 HWND g_contactWindow;
+HWND g_callWindow;
 
 std::string uuidString = "";
-std::string destUserString = "bbb@gmail.com";
+std::string emailString = "";
 
-std::string uuidStringB = "";
-std::string destUserStringB = "aaa@gmail.com";
+OutgoingCallWindow* outGoingCallWindow;
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
 	HWND hLoginWindow;
+	HWND hOutGoingCallWindow;
 
 	// Store the instance handle
 	g_hInstance = hInstance;
@@ -97,6 +99,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MessageBox(hMainWindow, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
+
+
 	g_mainWindow = hMainWindow;
 	g_loginWindow = hLoginWindow;
 
@@ -111,7 +115,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UpdateWindow(hLoginWindow);
 
 
-	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient);
+	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow);
 	loginWindow->startWebview(g_loginWindow);
 
 	// Message loop
@@ -139,6 +143,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	int length;
 	std::string targetEmail;
 	std::string targetUuid;
+	std::wstring wsEmail;
 
 	switch (msg)
 	{
@@ -169,8 +174,9 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (response == "OK") 
 			{
 				uuidString = contentsJson["uuid"].string_value();
+				emailString = contentsJson["email"].string_value();
 
-				std::string welcome = "welcome " + uuidString;
+				std::string welcome = "welcome " + uuidString + " " + emailString;
 				std::wstring welcomeMessage(welcome.begin(), welcome.end());
 
 				MessageBox(hWnd, welcomeMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
@@ -202,8 +208,28 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// Todo: close call window and send information to media controller
 		}
-		
 		break;
+
+	case WM_LOGON_COMPLETED_MESSAGE:
+		message = reinterpret_cast<const char*>(lParam);
+		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
+		wideMessage.resize(length);
+		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
+
+		stdMessage = std::string(message);
+		receiveJson = json11::Json::parse(stdMessage, errorMessage);
+		targetEmail = receiveJson["email"].string_value();
+		targetUuid = receiveJson["uuid"].string_value();
+
+		uuidString = targetUuid;
+		emailString = targetEmail;
+
+		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
+
+		MessageBox(hWnd, wsEmail.c_str(), _T("login completed!"), MB_ICONERROR | MB_OK);
+
+		break;
+
 	case WM_CONTACT_MESSAGE:
 		message = reinterpret_cast<const char*>(lParam);
 		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
@@ -215,32 +241,51 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		targetEmail = receiveJson["email"].string_value();
 		targetUuid = receiveJson["uuid"].string_value();
 
-		//todo: activate a call ui window and send invite and show outgoing ui
+		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
 
-		MessageBox(hWnd, _T("message from contact"), _T("info"), MB_ICONERROR | MB_OK);
+		MessageBox(hWnd, wsEmail.c_str(), _T("message from contact"), MB_ICONERROR | MB_OK);
+
+		//todo: activate a call ui window and send invite and show outgoing ui
+		// Show the child window
+			// create outgoing call window
+		g_callWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Calling Window"), WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, g_hInstance, nullptr);
+		if (!g_callWindow)
+		{
+			MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
+			return 1;
+		}
+
+		ShowWindow(g_callWindow, SW_SHOW);
+		UpdateWindow(g_callWindow);
+
+		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString);
+		outGoingCallWindow->startWebview(g_callWindow);
 		break;
+
 	case WM_DESTROY:
 		socketClient->Disconnect();
 		PostQuitMessage(0);
 		break;
+
 	case WM_COMMAND:
 		if (LOWORD(wParam) == 1) 
 		{
-			HWND hChildWnd2 = CreateWindowEx(0, _T("ChildWindowClass"), _T("Contact List"), WS_OVERLAPPEDWINDOW,
+			HWND hContactWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Contact List"), WS_OVERLAPPEDWINDOW,
 				CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, nullptr, nullptr, g_hInstance, nullptr);
-			if (!hChildWnd2)
+			if (!hContactWindow)
 			{
 				MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
 				return 1;
 			}
 
-			g_contactWindow = hChildWnd2;
+			g_contactWindow = hContactWindow;
 
 			// Show the child window
-			ShowWindow(hChildWnd2, SW_SHOW);
-			UpdateWindow(hChildWnd2);
+			ShowWindow(hContactWindow, SW_SHOW);
+			UpdateWindow(hContactWindow);
 
-			ContactListWindow* contactsListWindow = new ContactListWindow(hChildWnd2, socketClient, g_mainWindow);
+			ContactListWindow* contactsListWindow = new ContactListWindow(hContactWindow, socketClient, g_mainWindow);
 			contactsListWindow->startWebview(g_contactWindow);
 
 		}
@@ -328,7 +373,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 											// wait for cancel or accept from server.
 											//std::string inviteResponse = socketComm->ReceiveResponse();
 											
-											/*
+
 											std::string errStr;
 											const auto inviteResponseJson = json11::Json::parse(inviteResponse, errStr);
 
@@ -349,7 +394,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 												MessageBox(g_mainWindow, _T("call is not accepted"), _T("info"), MB_ICONERROR | MB_OK);
 											}
-											*/
+
 										}
 
 										return S_OK;

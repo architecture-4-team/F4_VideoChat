@@ -45,6 +45,9 @@
     <ClCompile Include="ContactsListWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OutgoingCallWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -52,10 +55,13 @@
     <None Include="login.html">
       <Filter>html</Filter>
     </None>
-    <None Include="..\callMenu\call.html">
+    <None Include="contacts.html">
       <Filter>html</Filter>
     </None>
-    <None Include="contacts.html">
+    <None Include="outgoingCall.html">
+      <Filter>html</Filter>
+    </None>
+    <None Include="imcommingCall.htm">
       <Filter>html</Filter>
     </None>
   </ItemGroup>
@@ -93,15 +99,13 @@
     <ClInclude Include="ContactsListWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OutgoingCallWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WebView2GettingStarted.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="CallUI.htm">
-      <Filter>Resource Files</Filter>
-    </CopyFileToFolders>
   </ItemGroup>
 </Project>

@@ -13,7 +13,13 @@
                         <button id="loginButtonA" class="btn btn-primary btn-lg btn-block w-100">login A</button>
                     </div>
                     <div class="col-md-6">
+                        <button id="completeButtonA" class="btn btn-primary btn-lg btn-block w-100">complete A</button>
+                    </div>
+                    <div class="col-md-6">
                         <button id="loginButtonB" class="btn btn-primary btn-lg btn-block w-100">login B</button>
+                    </div>
+                    <div class="col-md-6">
+                        <button id="completeButtonB" class="btn btn-primary btn-lg btn-block w-100">complete B</button>
                     </div>
                 </div>
             </div>
@@ -27,18 +33,47 @@
     <script>
         // Get the button elements
         var loginButtonA = document.getElementById("loginButtonA");
+        var completeButtonA = document.getElementById("completeButtonA");
         var loginButtonB = document.getElementById("loginButtonB");
+        var completeButtonB = document.getElementById("completeButtonB");
 
+        completeButtonA.disabled = true;
+        completeButtonB.disabled = true;
+
+        var jsonLoginA = {
+            action: "login_complete",
+            email: "aaa@gmail.com",
+            uuid: ""
+        }
+
+        var jsonLoginB = {
+            action: "login_complete",
+            email: "bbb@gmail.com",
+            uuid: ""
+        }
 
         // Add a click event listener to the loginButton
         loginButtonA.addEventListener("click", function () {
-            window.chrome.webview.postMessage(`loginA_cliked`);
+            loginButtonA.disabled = true;
+            completeButtonA.disabled = false;
+            window.chrome.webview.postMessage("loginA_cliked");
         });
 
         // Add a click event listener to the endButton
         loginButtonB.addEventListener("click", function () {
-            window.chrome.webview.postMessage(`loginB_cliked`);
+            loginButtonB.disabled = true;
+            completeButtonB.disabled = false;
+            window.chrome.webview.postMessage("loginB_cliked");
         });
+
+        completeButtonA.addEventListener("click", function () {
+            window.chrome.webview.postMessage(JSON.stringify(jsonLoginA));
+        });
+
+        completeButtonB.addEventListener("click", function () {
+            window.chrome.webview.postMessage(JSON.stringify(jsonLoginB));
+        });
+
     </script>
 </body>
 </html>

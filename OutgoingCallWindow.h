@@ -12,17 +12,17 @@
 
 using namespace Microsoft::WRL;
 // Pointer to WebViewController
-static wil::com_ptr<ICoreWebView2Controller> webviewController2;
+static wil::com_ptr<ICoreWebView2Controller> webviewControllerOutCall;
 
 // Pointer to WebView window
-static wil::com_ptr<ICoreWebView2> webview2;
+static wil::com_ptr<ICoreWebView2> webviewOutCall;
 
 
-class LoginWindow
+class OutgoingCallWindow
 {
 public:
-	LoginWindow(HWND window, SocketClient* socketClient, HWND mainWindow);
-	~LoginWindow();
+	OutgoingCallWindow(HWND window, SocketClient* socketClient, HWND mainWindow, std::string callee, std::string myUUID, std::string myEmail);
+	~OutgoingCallWindow();
 	void startWebview(HWND gWindow);
 
 private:
