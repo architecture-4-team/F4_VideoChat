@@ -85,18 +85,18 @@ void OutgoingCallWindow::startWebview(HWND gWindow)
 								}
 								else if (wcscmp(message.get(), L"stop_call") == 0) //on stop calling..
 								{
-									//todo send server to cancel call
+									// todo, we don't make this process. call stop while calling..
 									/*
-									json11::Json inviteJson = json11::Json::object{
-										{"command", "CANCEL"},
+									json11::Json byeJson = json11::Json::object{
+										{"command", "BYE"},
 										{"contents", json11::Json::object {
-												{"uuid", uuidString},
-												{"email", destUserString}
+												{"uuid", g_out_uuid},
+												{"callid", g_out_callId}
 											}
 										}
 									};
+									g_outcall_socketClient->SendMessageW(byeJson.dump());
 									*/
-
 									SendMessage(g_outcall_handle, WM_CLOSE, 0, 0);
 								}
 								return S_OK;

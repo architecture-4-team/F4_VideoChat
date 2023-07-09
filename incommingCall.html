@@ -89,7 +89,6 @@
             }
         });
 
-        // Add a click event listener to stop button
         document.getElementById("call-btn").addEventListener("click", function () {
             window.chrome.webview.postMessage(`accept_call`);
         });

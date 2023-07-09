@@ -5,13 +5,17 @@ HWND g_incomming_handle;
 HWND g_incomming_main_handle;
 SocketClient* g_incomming_socketClient;
 std::string g_caller;
+std::string g_in_uuid;
+std::string g_in_callId;
 
-IncommingCallWindow::IncommingCallWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string caller, std::string myUUID, std::string myEmail)
+IncommingCallWindow::IncommingCallWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string caller, std::string myUUID, std::string myEmail, std::string callId)
 {
 	hWindow = window;
 	g_incomming_socketClient = socket;
 	g_incomming_main_handle = mainWindow;
 	g_caller = caller;
+	g_in_uuid = myUUID;
+	g_in_callId = callId;
 };
 
 void IncommingCallWindow::startWebview(HWND gWindow)
@@ -83,20 +87,37 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 									webviewInCall->PostWebMessageAsString(wsCallJsonStr.c_str());
 
 								}
-								else if (wcscmp(message.get(), L"stop_call") == 0) //on stop calling..
+								else if (wcscmp(message.get(), L"accept_call") == 0) //accept call
 								{
-									//todo send server to cancel call
-									/*
-									json11::Json inviteJson = json11::Json::object{
-										{"command", "CANCEL"},
+									json11::Json acceptJson = json11::Json::object{
+										{"command", "ACCEPT"},
 										{"contents", json11::Json::object {
-												{"uuid", uuidString},
-												{"email", destUserString}
+												{"uuid", g_in_uuid},
+												{"callid", g_in_callId}
 											}
 										}
 									};
-									*/
 
+									g_incomming_socketClient->SendMessageW(acceptJson.dump());
+									
+									SendMessage(g_incomming_handle, WM_CLOSE, 0, 0);
+								}
+								else if (wcscmp(message.get(), L"reject_call") == 0) //reject call
+								{
+
+									// Todo: we don't have no reject call case.
+									/*
+									json11::Json rejectJson = json11::Json::object{
+										{"command", "CANCEL"},
+										{"response", "REJECT"},
+										{"contents", json11::Json::object {
+												{"uuid", g_in_uuid},
+												{"callid", g_in_callId}
+											}
+										}
+									};
+									g_incomming_socketClient->SendMessageW(rejectJson.dump());
+									*/
 									SendMessage(g_incomming_handle, WM_CLOSE, 0, 0);
 								}
 								return S_OK;

@@ -43,6 +43,7 @@ HWND g_inCallWindow;
 
 std::string uuidString = "";
 std::string emailString = "";
+std::string callIdString = "";
 
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
@@ -84,10 +85,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// Create a button
+	// Create a contact list button
 	HWND hButton = CreateWindowEx(0, _T("BUTTON"), _T("Contact List"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		10, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(1), hInstance, nullptr);
 	if (!hButton)
+	{
+		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
+		return 1;
+	}
+
+	// Create a call end button
+	HWND hCallEndButton = CreateWindowEx(0, _T("BUTTON"), _T("End Call"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(2), hInstance, nullptr);
+	if (!hCallEndButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
@@ -168,9 +178,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			std::string callerEmail;
 			callerEmail = contentsJson["email"].string_value();
-
-			// Todo: create a call receive window
-			// MessageBox(hWnd, _T("incomming call"), _T("info"), MB_ICONERROR | MB_OK);
+			callIdString = contentsJson["callid"].string_value();
 
 			// create incomming call window
 			g_inCallWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Incomming Call Window"), WS_OVERLAPPEDWINDOW,
@@ -184,7 +192,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ShowWindow(g_inCallWindow, SW_SHOW);
 			UpdateWindow(g_inCallWindow);
 
-			incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow, callerEmail, uuidString, emailString);
+			incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow, callerEmail, uuidString, emailString, callIdString);
 			incommingCallWindow->startWebview(g_inCallWindow);
 
 		}
@@ -210,12 +218,19 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (response == "NOT AVAILABLE")
 			{
 				MessageBox(hWnd, _T("Callee is not available."), _T("info"), MB_ICONERROR | MB_OK);
-				// Todo: close call menu
+
+				if (g_callWindow) {
+					SendMessage(g_callWindow, WM_CLOSE, 0, 0);
+				}
 			}
 			else if (response == "BUSY")
 			{
 				MessageBox(hWnd, _T("Callee is busy."), _T("info"), MB_ICONERROR | MB_OK);
-				// Todo: close call menu
+
+				if (g_callWindow) {
+					SendMessage(g_callWindow, WM_CLOSE, 0, 0);
+				}
+
 			}
 		}
 		else if (command == "ACCEPT")
@@ -224,8 +239,12 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			std::string callId;
 			uuid = contentsJson["uuid"].string_value();
 			callId = contentsJson["callid"].string_value();
+			callIdString = callId;
 
-			// Todo: close call window and send information to media controller
+			if (g_callWindow) {
+				SendMessage(g_callWindow, WM_CLOSE, 0, 0);
+			}
+
 		}
 		break;
 
@@ -318,125 +337,19 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			contactsListWindow->startWebview(g_contactWindow);
 
 		}
-		/*
-		else if (LOWORD(wParam) == 2) //call
+		else if (LOWORD(wParam) == 2)
 		{
-			HWND hChildWnd2 = CreateWindowEx(0, _T("ChildWindowClass"), _T("Call Menu"), WS_OVERLAPPEDWINDOW,
-				CW_USEDEFAULT, CW_USEDEFAULT, 800, 200, nullptr, nullptr, g_hInstance, nullptr);
-			if (!hChildWnd2)
-			{
-				MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
-				return 1;
-			}
-
-			// Show the child window
-			ShowWindow(hChildWnd2, SW_SHOW);
-			UpdateWindow(hChildWnd2);
-
-			CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
-				Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-					[hChildWnd2](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
-
-						// Create a CoreWebView2Controller and get the associated CoreWebView2 whose parent is the main window hWnd
-						env->CreateCoreWebView2Controller(hChildWnd2, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-							[hChildWnd2](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
-								if (controller != nullptr) {
-									webviewController = controller;
-									webviewController->get_CoreWebView2(&webview);
-								}
-
-								// Add a few settings for the webview
-								// The demo step is redundant since the values are the default settings
-								wil::com_ptr<ICoreWebView2Settings> settings;
-								webview->get_Settings(&settings);
-								settings->put_IsScriptEnabled(TRUE);
-								settings->put_AreDefaultScriptDialogsEnabled(TRUE);
-								settings->put_IsWebMessageEnabled(TRUE);
-
-								// Resize WebView to fit the bounds of the parent window
-								RECT bounds;
-								GetClientRect(hChildWnd2, &bounds);
-								webviewController->put_Bounds(bounds);
-
-								// Schedule an async task to navigate to Bing
-								webview->Navigate(L"file:///C:/Users/yongs/Projects/callMenu/call.html");
-
-								EventRegistrationToken token;
-								webview->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
-								webview->ExecuteScript(L"window.document.URL;", Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-									[](HRESULT errorCode, LPCWSTR resultObjectAsJson) -> HRESULT {
-										LPCWSTR URL = resultObjectAsJson;
-										//doSomethingWithURL(URL);
-										return S_OK;
-									}).Get());
-								// </Scripting>
-
-								// <CommunicationHostWeb>
-								// Step 6 - Communication between host and web content
-								// Set an event handler for the host to return received message back to the web content
-								webview->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-									[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
-										wil::unique_cotaskmem_string message;
-										args->TryGetWebMessageAsString(&message);
-										//processMessage(&message);
-										//webview->PostWebMessageAsJson(L"{\"CallState\": \"success\"}");
-										std::wstring wstr(message.get());
-										// Convert std::wstring to std::string
-										std::string sstr(wstr.begin(), wstr.end());
-
-										json11::Json inviteJson = json11::Json::object{
-											{"command", "INVITE"},
-											{"contents", json11::Json::object {
-													{"uuid", uuidString},
-													{"target", destUserString}
-												}
-											}
-										};
-
-										if (sstr == "call_start") // ui call button is clicked.
-										{ 
-											// send inviteJson message to server.
-											//socketComm->SendMessageW(inviteJson.dump());
-											socketClient->SendMessageW(inviteJson.dump());
-
-											// wait for cancel or accept from server.
-											//std::string inviteResponse = socketComm->ReceiveResponse();
-											
-
-											std::string errStr;
-											const auto inviteResponseJson = json11::Json::parse(inviteResponse, errStr);
-
-											std::string command = inviteResponseJson["command"].string_value();
-											if (command == "ACCEPT") {
-												std::string contentsJsonString = inviteResponseJson["contents"].dump();
-												const auto contentsJson = json11::Json::parse(contentsJsonString, errStr);
-												std::string uuid = contentsJson["uuid"].string_value();
-												std::string callId = contentsJson["callid"].string_value();
-
-												MessageBox(g_mainWindow, _T("call is accepted"), _T("info"), MB_ICONERROR | MB_OK);
-											}
-											else {
-												std::string contentsJsonString = inviteResponseJson["contents"].dump();
-												const auto contentsJson = json11::Json::parse(contentsJsonString, errStr);
-												std::string uuid = contentsJson["uuid"].string_value();
-												std::string callId = contentsJson["callid"].string_value();
-
-												MessageBox(g_mainWindow, _T("call is not accepted"), _T("info"), MB_ICONERROR | MB_OK);
-											}
-
-										}
-
-										return S_OK;
-									}).Get(), &token);
-
-								return S_OK;
-							}).Get());
-						return S_OK;
-					}).Get());
+			json11::Json byeJson = json11::Json::object{
+				{"command", "BYE"},
+				{"contents", json11::Json::object {
+						{"uuid", uuidString},
+						{"callid", callIdString}
+					}
+				}
+			};
+			socketClient->SendMessageW(byeJson.dump());
 		}
-		*/
 		break;
-
 
 	}
 
