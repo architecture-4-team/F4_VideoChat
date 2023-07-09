@@ -104,9 +104,6 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 								}
 								else if (wcscmp(message.get(), L"reject_call") == 0) //reject call
 								{
-
-									// Todo: we don't have no reject call case.
-									/*
 									json11::Json rejectJson = json11::Json::object{
 										{"command", "CANCEL"},
 										{"response", "REJECT"},
@@ -117,7 +114,7 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 										}
 									};
 									g_incomming_socketClient->SendMessageW(rejectJson.dump());
-									*/
+
 									SendMessage(g_incomming_handle, WM_CLOSE, 0, 0);
 								}
 								return S_OK;

@@ -232,6 +232,15 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 
 			}
+			else if (response == "REJECT")
+			{
+				MessageBox(hWnd, _T("Callee is rejected."), _T("info"), MB_ICONERROR | MB_OK);
+
+				if (g_callWindow) {
+					SendMessage(g_callWindow, WM_CLOSE, 0, 0);
+				}
+
+			}
 		}
 		else if (command == "ACCEPT")
 		{
