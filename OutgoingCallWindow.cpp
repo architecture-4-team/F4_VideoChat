@@ -5,13 +5,17 @@ HWND g_outcall_handle;
 HWND g_outcall_main_handle;
 SocketClient* g_outcall_socketClient;
 std::string g_callee;
+std::string callRoomId;
+std::string g_myUUID;
 
-OutgoingCallWindow::OutgoingCallWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string callee, std::string myUUID, std::string myEmail)
+OutgoingCallWindow::OutgoingCallWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string callee, std::string myUUID, std::string myEmail, std::string callId)
 {
 	hWindow = window;
 	g_outcall_socketClient = socket;
 	g_outcall_main_handle = mainWindow;
 	g_callee = callee;
+	callRoomId = callId;
+	g_myUUID = myUUID;
 };
 
 void OutgoingCallWindow::startWebview(HWND gWindow)
@@ -88,18 +92,15 @@ void OutgoingCallWindow::startWebview(HWND gWindow)
 								}
 								else if (wcscmp(message.get(), L"stop_call") == 0) //on stop calling..
 								{
-									// todo, we don't make this process. call stop while calling..
-									/*
 									json11::Json byeJson = json11::Json::object{
 										{"command", "BYE"},
 										{"contents", json11::Json::object {
-												{"uuid", g_out_uuid},
-												{"callid", g_out_callId}
+												{"uuid", g_myUUID},
+												{"callid", callRoomId}
 											}
 										}
 									};
 									g_outcall_socketClient->SendMessageW(byeJson.dump());
-									*/
 									SendMessage(g_outcall_handle, WM_CLOSE, 0, 0);
 								}
 								return S_OK;

@@ -304,7 +304,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(g_callWindow, SW_SHOW);
 		UpdateWindow(g_callWindow);
 
-		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString);
+		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString, callIdString);
 		outGoingCallWindow->startWebview(g_callWindow);
 
 		// send invite to server

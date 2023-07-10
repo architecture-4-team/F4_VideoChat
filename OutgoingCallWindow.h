@@ -21,7 +21,7 @@ static wil::com_ptr<ICoreWebView2> webviewOutCall;
 class OutgoingCallWindow
 {
 public:
-	OutgoingCallWindow(HWND window, SocketClient* socketClient, HWND mainWindow, std::string callee, std::string myUUID, std::string myEmail);
+	OutgoingCallWindow(HWND window, SocketClient* socketClient, HWND mainWindow, std::string callee, std::string myUUID, std::string myEmail, std::string callId);
 	~OutgoingCallWindow();
 	void startWebview(HWND gWindow);
 
