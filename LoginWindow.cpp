@@ -109,7 +109,8 @@ void LoginWindow::startWebview(HWND gWindow)
 
 									if (messageJson["action"] == "login_complete") {
 										//send event to main window to activate a call window
-										PostMessage(g_mainHandle, WM_LOGON_COMPLETED_MESSAGE, 0, (LPARAM)loginBuffer);
+										//PostMessage(g_mainHandle, WM_LOGON_COMPLETED_MESSAGE, 0, (LPARAM)loginBuffer);
+										CallService::GetInstance().SendMessageToHandler(WM_LOGON_COMPLETED_MESSAGE, 0, (LPARAM)loginBuffer);
 									}
 									else
 									{

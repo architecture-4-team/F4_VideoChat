@@ -3,27 +3,17 @@
 #include <Windows.h>
 #include <tchar.h>
 #include <string>
-#include <wrl.h>
-#include <wil/com.h>
 #include <stdio.h>
 #include <iostream>
-#include "WebView2.h"
 #include "resource.h"
 #include "json11.hpp"
 #include "common.h"
 #include "LoginWindow.h"
 #include "ContactsListWindow.h"
-#include "OutgoingCallWindow.h"
 #include <mmsystem.h>
+#include "CallService.h"
 #include "IncommingCallWindow.h"
-
-using namespace Microsoft::WRL;
-
-// Pointer to WebViewController
-static wil::com_ptr<ICoreWebView2Controller> webviewController;
-
-// Pointer to WebView window
-static wil::com_ptr<ICoreWebView2> webview;
+#include "OutgoingCallWindow.h"
 
 // Global variables
 HINSTANCE g_hInstance;
@@ -32,22 +22,18 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-//SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
 SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 
 HWND g_loginWindow;
 HWND g_mainWindow;
 HWND g_contactWindow;
-HWND g_callWindow;
+HWND g_outCallWindow;
 HWND g_inCallWindow;
-
-std::string uuidString = "";
-std::string emailString = "";
-std::string callIdString = "";
 
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
 
+CallService* callService = &CallService::GetInstance();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -113,10 +99,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-
 	g_mainWindow = hMainWindow;
 	g_loginWindow = hLoginWindow;
 
+	if (!callService->Initialize(g_mainWindow, socketClient, g_loginWindow, g_contactWindow, g_outCallWindow, g_inCallWindow, g_hInstance)) {
+		MessageBox(hMainWindow, _T("Failed to create call service."), _T("Error"), MB_ICONERROR | MB_OK);
+		return 1;
+	}
+	callService->ProcessMessages();
 	socketClient->Connect(hMainWindow);
 
 	// Show and update the main window
@@ -163,182 +153,46 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_SOCKET_MESSAGE:
-		message = reinterpret_cast<const char*>(lParam);
-		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
-		wideMessage.resize(length);
-		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
-
-		stdMessage = std::string(message);
-		receiveJson = json11::Json::parse(stdMessage, errorMessage);
-		command = receiveJson["command"].string_value();
-		response = receiveJson["response"].string_value();
-		contentsJsonString = receiveJson["contents"].dump();
-		contentsJson = json11::Json::parse(contentsJsonString, errorMessage);
-
-		if (command == "INVITE")
-		{
-			std::string callerEmail;
-			callerEmail = contentsJson["email"].string_value();
-			callIdString = contentsJson["callid"].string_value();
-
-			// create incomming call window
-			g_inCallWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Incomming Call Window"), WS_OVERLAPPEDWINDOW,
-				CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, g_hInstance, nullptr);
-			if (!g_inCallWindow)
-			{
-				MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
-				return 1;
-			}
-
-			ShowWindow(g_inCallWindow, SW_SHOW);
-			UpdateWindow(g_inCallWindow);
-
-			incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow, callerEmail, uuidString, emailString, callIdString);
-			incommingCallWindow->startWebview(g_inCallWindow);
-
-		}
-		else if (command == "LOGIN") 
-		{
-			if (response == "OK") 
-			{
-				uuidString = contentsJson["uuid"].string_value();
-				emailString = contentsJson["email"].string_value();
-
-				std::string welcome = "welcome " + uuidString + " " + emailString;
-				std::wstring welcomeMessage(welcome.begin(), welcome.end());
-
-				MessageBox(hWnd, welcomeMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
-			}
-			else
-			{
-				MessageBox(hWnd, _T("fail to login"), _T("info"), MB_ICONERROR | MB_OK);
-			}
-		}
-		else if (command == "CANCEL")
-		{
-			if (response == "NOT AVAILABLE")
-			{
-				MessageBox(hWnd, _T("Callee is not available."), _T("info"), MB_ICONERROR | MB_OK);
-
-				if (g_callWindow) {
-					SendMessage(g_callWindow, WM_CLOSE, 0, 0);
-				}
-			}
-			else if (response == "BUSY")
-			{
-				MessageBox(hWnd, _T("Callee is busy."), _T("info"), MB_ICONERROR | MB_OK);
-
-				if (g_callWindow) {
-					SendMessage(g_callWindow, WM_CLOSE, 0, 0);
-				}
-
-			}
-			else if (response == "REJECT")
-			{
-				MessageBox(hWnd, _T("Callee is rejected."), _T("info"), MB_ICONERROR | MB_OK);
-
-				if (g_callWindow) {
-					SendMessage(g_callWindow, WM_CLOSE, 0, 0);
-				}
-
-			}
-		}
-		else if (command == "ACCEPT")
-		{
-			std::string uuid;
-			std::string callId;
-			uuid = contentsJson["uuid"].string_value();
-			callId = contentsJson["callid"].string_value();
-			callIdString = callId;
-
-			if (g_callWindow) {
-				SendMessage(g_callWindow, WM_CLOSE, 0, 0);
-			}
-
-		}
+		callService->SendMessageToHandler(WM_RECEIVED_MESSAGE, wParam, lParam);
 		break;
 
-	case WM_LOGON_COMPLETED_MESSAGE:
-		message = reinterpret_cast<const char*>(lParam);
-		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
-		wideMessage.resize(length);
-		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
-
-		stdMessage = std::string(message);
-		receiveJson = json11::Json::parse(stdMessage, errorMessage);
-		targetEmail = receiveJson["email"].string_value();
-		targetUuid = receiveJson["uuid"].string_value();
-
-		//uuidString = targetUuid; //todo: we have to change of return value of login request.
-		emailString = targetEmail;
-
-		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
-
-		MessageBox(hWnd, wsEmail.c_str(), _T("login completed!"), MB_ICONERROR | MB_OK);
-
-		break;
-
-	case WM_CONTACT_MESSAGE:
-		message = reinterpret_cast<const char*>(lParam);
-		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
-		wideMessage.resize(length);
-		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
-
-		stdMessage = std::string(message);
-		receiveJson = json11::Json::parse(stdMessage, errorMessage);
-		targetEmail = receiveJson["email"].string_value();
-		targetUuid = receiveJson["uuid"].string_value();
-
-		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
-
-		MessageBox(hWnd, wsEmail.c_str(), _T("message from contact"), MB_ICONERROR | MB_OK);
-
-		// create outgoing call window
-		g_callWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Calling Window"), WS_OVERLAPPEDWINDOW,
+	case WM_CREATE_INCOMMING_WINDOW_MESSAGE:
+		// create incomming call window
+		g_inCallWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Incomming Call Window"), WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, g_hInstance, nullptr);
-		if (!g_callWindow)
+		if (!g_inCallWindow)
 		{
 			MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
 			return 1;
 		}
 
-		ShowWindow(g_callWindow, SW_SHOW);
-		UpdateWindow(g_callWindow);
+		ShowWindow(g_inCallWindow, SW_SHOW);
+		UpdateWindow(g_inCallWindow);
 
-		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString, callIdString);
-		outGoingCallWindow->startWebview(g_callWindow);
-
-		// send invite to server
-		inviteJson = json11::Json::object{
-			{"command", "INVITE"},
-			{"contents", json11::Json::object {
-				{"uuid", uuidString},
-				{"target", targetEmail}}
-			}
-		};
-
-		socketClient->SendMessageW(inviteJson.dump());
+		incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow, 
+			callService->GetDestEmail(), callService->GetMyUUID(), callService->GetMyEmail(), callService->GetCallId());
+		incommingCallWindow->startWebview(g_inCallWindow);
 
 		break;
 
-	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
-		message = reinterpret_cast<const char*>(lParam);
-		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
-		wideMessage.resize(length);
-		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
+	case WM_CREATE_OUTGOING_WINDOW_MESSAGE:
+		g_outCallWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Calling Window"), WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, g_hInstance, nullptr);
+		if (!g_outCallWindow)
+		{
+			MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
+			return 1;
+		}
 
-		stdMessage = std::string(message);
-		receiveJson = json11::Json::parse(stdMessage, errorMessage);
-		command = receiveJson["command"].string_value();
-		contentsJsonString = receiveJson["contents"].dump();
-		contentsJson = json11::Json::parse(contentsJsonString, errorMessage);
+		ShowWindow(g_outCallWindow, SW_SHOW);
+		UpdateWindow(g_outCallWindow);
 
-		contentsJson["uuid"].string_value();
-		callIdString = contentsJson["callid"].string_value();
+		outGoingCallWindow = new OutgoingCallWindow(g_outCallWindow, socketClient, g_mainWindow, 
+			callService->GetDestEmail(), callService->GetMyUUID(), callService->GetMyEmail(), callService->GetCallId());
+		outGoingCallWindow->startWebview(g_outCallWindow);
 
-		wStringCommon = std::wstring(stdMessage.begin(), stdMessage.end());
-
-		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
+		callService->UpdateOutCallHandle(g_outCallWindow);
+		break;
 
 	case WM_DESTROY:
 		socketClient->Disconnect();
@@ -371,11 +225,11 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			json11::Json byeJson = json11::Json::object{
 				{"command", "BYE"},
 				{"contents", json11::Json::object {
-						{"uuid", uuidString},
-						{"callid", callIdString}
+						{"uuid", callService->GetMyUUID()},
+						{"callid", callService->GetCallId()}
 					}
 				}
-			};
+			}; 
 			socketClient->SendMessageW(byeJson.dump());
 		}
 		break;

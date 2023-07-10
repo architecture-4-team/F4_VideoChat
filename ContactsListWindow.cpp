@@ -81,7 +81,8 @@ void ContactListWindow::startWebview(HWND gWindow)
 
 								if (messageJson["action"] == "call") {
 									//send event to main window to activate a call window
-									PostMessage(g_contact_main_handle, WM_CONTACT_MESSAGE, 0, (LPARAM)buffer);
+									//PostMessage(g_contact_main_handle, WM_CONTACT_MESSAGE, 0, (LPARAM)buffer);
+									CallService::GetInstance().SendMessageToHandler(WM_CONTACT_MESSAGE, 0, (LPARAM)buffer);
 								}
 								else
 								{

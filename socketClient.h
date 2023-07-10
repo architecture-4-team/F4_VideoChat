@@ -3,6 +3,7 @@
 #include <thread>
 #include <iostream>
 #include <winsock2.h>
+//#include "CallService.h"
 
 #pragma comment(lib, "ws2_32.lib")
 class SocketClient {
@@ -18,7 +19,7 @@ private:
     SOCKET m_socket;
     std::unique_ptr<std::thread> m_thread;
     bool m_running;
-
+//    CallService* m_callService;
     bool Initialize();
     void ReceiveThread();
 };

@@ -7,8 +7,10 @@
 #include <wil/com.h>
 #include <stdio.h>
 #include <iostream>
-#include "WebView2.h"
 #include "json11.hpp"
+#include "WebView2.h"
+#include "common.h"
+#include "CallService.h"
 
 using namespace Microsoft::WRL;
 // Pointer to WebViewController
@@ -22,7 +24,6 @@ class IncommingCallWindow
 {
 public:
 	IncommingCallWindow(HWND window, SocketClient* socketClient, HWND mainWindow, std::string callee, std::string myUUID, std::string myEmail, std::string callId);
-	~IncommingCallWindow();
 	void startWebview(HWND gWindow);
 
 private:
