@@ -218,6 +218,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IncommingCallWindow.cpp" />
+    <ClCompile Include="MultimediaManager.cpp" />
+    <ClCompile Include="MultiMediaReceiver.cpp" />
+    <ClCompile Include="MultiMediaSender.cpp" />
     <ClCompile Include="OutgoingCallWindow.cpp" />
     <ClCompile Include="ContactsListWindow.cpp" />
     <ClCompile Include="F4Main.cpp" />
@@ -246,6 +249,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IncommingCallWindow.h" />
+    <ClInclude Include="MultiMediaInterface.h" />
+    <ClInclude Include="MultimediaManager.h" />
+    <ClInclude Include="MultiMediaReceiver.h" />
+    <ClInclude Include="MultiMediaSender.h" />
     <ClInclude Include="OutgoingCallWindow.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="ContactsListWindow.h" />

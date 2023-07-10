@@ -16,6 +16,8 @@
 #include "OutgoingCallWindow.h"
 #include <mmsystem.h>
 #include "IncommingCallWindow.h"
+#include "MultimediaManager.h"
+#include <gst/gst.h>
 
 using namespace Microsoft::WRL;
 
@@ -32,8 +34,23 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+#define MEDIADEBUG 0
+
+static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+#if MEDIADEBUG
+static void SetStdOutToNewConsole(void);
+static FILE* pCout = NULL;
+#endif
+
 //SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
 SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
+
+MultimediaManager& mManager = MultimediaManager::GetInstance();
+
+HWND videoWindow0; // Video 출력용 윈도우 핸들
+HWND videoWindow1; // Video 출력용 윈도우 핸들
+HWND videoWindow2; // Video 출력용 윈도우 핸들
+HWND videoWindow3; // Video 출력용 윈도우 핸들
 
 HWND g_loginWindow;
 HWND g_mainWindow;
@@ -48,11 +65,15 @@ std::string callIdString = "";
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
 
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
 	HWND hLoginWindow;
+
+	//SetStdOutToNewConsole();
+
+	//gst_debug_set_default_threshold(GST_LEVEL_FIXME);
+	//gst_debug_set_active(true);
 
 	// Store the instance handle
 	g_hInstance = hInstance;
@@ -130,6 +151,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow);
 	loginWindow->startWebview(g_loginWindow);
+
+
 
 	// Message loop
 	MSG msg;
@@ -358,8 +381,56 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			};
 			socketClient->SendMessageW(byeJson.dump());
 		}
+#if MEDIADEBUG
+		// 메뉴 선택을 구문 분석합니다:
+		switch (LOWORD(wParam))
+		{
+		case IDC_START_SENDER:
+			mManager.setupSender(videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
+			// Server Ip has been set up at initialize
+			mManager.makeCall(); // Receiver is decided by server application, just send video and audio
+			break;
+		case IDC_STOP_SENDER:
+			mManager.pauseCall();
+			break;
+		case IDC_START_RECEIVER:
+			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
+			mManager.playReceiver(1);
+			break;
+		case IDC_STOP_RECEIVER:
+			mManager.pauseReceiver(1);
+			break;
+		case IDC_START_RECEIVER2:
+			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // first video setup
+			mManager.playReceiver(2);
+			break;
+		case IDC_STOP_RECEIVER2:
+			mManager.pauseReceiver(2);
+			break;
+		case IDC_START_RECEIVER3:
+			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // first video setup
+			mManager.playReceiver(3);
+			break;
+		case IDC_STOP_RECEIVER3:
+			mManager.pauseReceiver(3);
+			break;
+		case IDC_ACCEPT_ALL:
+			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
+			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // second video setup
+			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // third video setup
+			mManager.makeReceiverStateChange(1, GST_STATE_PAUSED);
+			mManager.makeReceiverStateChange(2, GST_STATE_PAUSED);
+			mManager.makeReceiverStateChange(3, GST_STATE_PAUSED);
+			mManager.playReceiver(1);
+			mManager.playReceiver(2);
+			mManager.playReceiver(3);
+			break;
+		}
+#endif
 		break;
-
+	case WM_CREATE:
+		OnCreate(hWnd, msg, wParam, lParam);
+		break;
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -379,3 +450,243 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
+
+#if MEDIADEBUG
+typedef enum
+{
+	_BUTNUM_SEND_START,
+	_BUTNUM_SEND_STOP,
+	_BUTNUM_RECV1_START,
+	_BUTNUM_RECV1_STOP,
+	_BUTNUM_RECV2_START,
+	_BUTNUM_RECV2_STOP,
+	_BUTNUM_RECV3_START,
+	_BUTNUM_RECV3_STOP,
+	_BUTNUM_RECV_ACCEPT_ALL,
+	_BUTNUM_MAX
+}E_BUT_NUM;
+#endif
+typedef enum
+{
+	_VIDEO_0,
+	_VIDEO_1,
+	_VIDEO_2,
+	_VIDEO_3,
+	_VIDEO_VIEW_MAX
+}E_VIDEO_NUM;
+
+static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	const unsigned int videoWidth = 320;
+	const unsigned int videoHeight = 240;
+	const unsigned int videoWidthMargin = 20;
+	const unsigned int videoHeightMargin = 80;
+
+	unsigned int videoPosX[_VIDEO_VIEW_MAX] = { 20, };
+	unsigned int videoPosY[_VIDEO_VIEW_MAX] = { 100, };
+
+	videoPosX[_VIDEO_1] = videoPosX[_VIDEO_0] + videoWidth + videoWidthMargin;
+	videoPosY[_VIDEO_1] = videoPosY[_VIDEO_0];
+
+
+	videoPosX[_VIDEO_2] = videoPosX[_VIDEO_0];
+	videoPosY[_VIDEO_2] = videoPosY[_VIDEO_0] + videoHeight + videoHeightMargin;
+
+
+	videoPosX[_VIDEO_3] = videoPosX[_VIDEO_1];
+	videoPosY[_VIDEO_3] = videoPosY[_VIDEO_2];
+
+
+	// 비디오 윈도우 생성
+	videoWindow0 = CreateWindowW(
+		L"STATIC",
+		L"Video Window",
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		videoPosX[_VIDEO_0], videoPosY[_VIDEO_0], videoWidth, videoHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+	// 비디오 출력을 위해 윈도우 스타일을 설정합니다.
+	SetWindowLongPtr(videoWindow0, GWL_STYLE, GetWindowLongPtr(videoWindow0, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(videoWindow0, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+
+	// 비디오 윈도우 생성
+	videoWindow1 = CreateWindowW(
+		L"STATIC",
+		L"Video Window1",
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		videoPosX[_VIDEO_1], videoPosY[_VIDEO_1], videoWidth, videoHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+	// 비디오 출력을 위해 윈도우 스타일을 설정합니다.
+	SetWindowLongPtr(videoWindow1, GWL_STYLE, GetWindowLongPtr(videoWindow1, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(videoWindow1, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+
+	// 비디오 윈도우 생성
+	videoWindow2 = CreateWindowW(
+		L"STATIC",
+		L"Video Window2",
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		videoPosX[_VIDEO_2], videoPosY[_VIDEO_2], videoWidth, videoHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+	// 비디오 출력을 위해 윈도우 스타일을 설정합니다.
+	SetWindowLongPtr(videoWindow2, GWL_STYLE, GetWindowLongPtr(videoWindow2, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(videoWindow2, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+
+	// 비디오 윈도우 생성
+	videoWindow3 = CreateWindowW(
+		L"STATIC",
+		L"Video Window3",
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		videoPosX[_VIDEO_3], videoPosY[_VIDEO_3], videoWidth, videoHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+	// 비디오 출력을 위해 윈도우 스타일을 설정합니다.
+	SetWindowLongPtr(videoWindow3, GWL_STYLE, GetWindowLongPtr(videoWindow3, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(videoWindow3, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+#if MEDIADEBUG
+	const unsigned int buttonWidth = 100;
+	const unsigned int buttonHeight = 30;
+	const unsigned int widthMargin = 20;
+	const unsigned int heightMargin = 20;
+
+	unsigned int posX[_BUTNUM_MAX] = { 70, };
+	unsigned int posY[_BUTNUM_MAX] = { 350, };
+
+	posX[_BUTNUM_SEND_START] = videoPosX[_VIDEO_0] + (videoWidth / 4) - (buttonWidth / 3);
+	posY[_BUTNUM_SEND_START] = videoPosY[_VIDEO_0] + videoHeight + 10;
+	posX[_BUTNUM_SEND_STOP] = posX[_BUTNUM_SEND_START] + buttonWidth + widthMargin;
+	posY[_BUTNUM_SEND_STOP] = posY[_BUTNUM_SEND_START];
+
+	posX[_BUTNUM_RECV1_START] = videoPosX[_VIDEO_1] + (videoWidth / 4) - (buttonWidth / 3);
+	posY[_BUTNUM_RECV1_START] = videoPosY[_VIDEO_1] + videoHeight + 10;
+	posX[_BUTNUM_RECV1_STOP] = posX[_BUTNUM_RECV1_START] + buttonWidth + widthMargin;
+	posY[_BUTNUM_RECV1_STOP] = posY[_BUTNUM_RECV1_START];
+
+	posX[_BUTNUM_RECV2_START] = videoPosX[_VIDEO_2] + (videoWidth / 4) - (buttonWidth / 3);
+	posY[_BUTNUM_RECV2_START] = videoPosY[_VIDEO_2] + videoHeight + 10;
+	posX[_BUTNUM_RECV2_STOP] = posX[_BUTNUM_RECV2_START] + buttonWidth + widthMargin;
+	posY[_BUTNUM_RECV2_STOP] = posY[_BUTNUM_RECV2_START];
+
+	posX[_BUTNUM_RECV3_START] = videoPosX[_VIDEO_3] + (videoWidth / 4) - (buttonWidth / 3);
+	posY[_BUTNUM_RECV3_START] = videoPosY[_VIDEO_3] + videoHeight + 10;
+	posX[_BUTNUM_RECV3_STOP] = posX[_BUTNUM_RECV3_START] + buttonWidth + widthMargin;
+	posY[_BUTNUM_RECV3_STOP] = posY[_BUTNUM_RECV3_START];
+
+	posX[_BUTNUM_RECV_ACCEPT_ALL] = 700;
+	posY[_BUTNUM_RECV_ACCEPT_ALL] = 10;
+
+
+	// 버튼 생성
+	CreateWindow(
+		_T("button"),
+		_T("Start"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_SEND_START], posY[_BUTNUM_SEND_START], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_START_SENDER,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	// 버튼 생성
+	CreateWindow(
+		_T("button"),
+		_T("Stop"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_SEND_STOP], posY[_BUTNUM_SEND_STOP], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_STOP_SENDER,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Start R1"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV1_START], posY[_BUTNUM_RECV1_START], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_START_RECEIVER,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Stop R1"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV1_STOP], posY[_BUTNUM_RECV1_STOP], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_STOP_RECEIVER,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Start R2"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV2_START], posY[_BUTNUM_RECV2_START], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_START_RECEIVER2,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Stop R2"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV2_STOP], posY[_BUTNUM_RECV2_STOP], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_STOP_RECEIVER2,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Start R3"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV3_START], posY[_BUTNUM_RECV3_START], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_START_RECEIVER3,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Stop R3"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV3_STOP], posY[_BUTNUM_RECV3_STOP], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_STOP_RECEIVER3,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("AcceptAll"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV_ACCEPT_ALL], posY[_BUTNUM_RECV_ACCEPT_ALL], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_ACCEPT_ALL,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+#endif
+	return 1;
+}
+
+#if MEDIADEBUG
+static void SetStdOutToNewConsole(void)
+{
+	// Allocate a console for this app
+	AllocConsole();
+	AttachConsole(ATTACH_PARENT_PROCESS);
+	freopen_s(&pCout, "CONOUT$", "w", stdout);
+}
+#endif

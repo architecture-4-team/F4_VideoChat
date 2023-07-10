@@ -97,7 +97,7 @@ bool MultimediaManager::setupReceiver(void* hVideo, int videoPort, int audioPort
 
 bool MultimediaManager::acceptCall(/* Callee °´Ã¼ ¹Þ±â */void* hVideo)
 {
-
+    return true;
 }
 
 void MultimediaManager::makeCall()
