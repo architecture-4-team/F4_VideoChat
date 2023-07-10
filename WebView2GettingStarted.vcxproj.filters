@@ -55,9 +55,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="html1.htm" />
-    <None Include="login.html">
-      <Filter>html</Filter>
-    </None>
     <None Include="contacts.html">
       <Filter>html</Filter>
     </None>
@@ -113,5 +110,10 @@
     <ResourceCompile Include="WebView2GettingStarted.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="login.html">
+      <Filter>html</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

@@ -48,7 +48,10 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 						GetClientRect(lWindow, &bounds);
 						webviewControllerInCall->put_Bounds(bounds);
 
-						webviewInCall->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/incommingCall.html");
+						TCHAR _buffer[MAX_PATH];
+						DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+						_tcscat_s(_buffer, _T("/incommingCall.html"));
+						webviewInCall->Navigate(_buffer);
 
 						EventRegistrationToken token;
 						webviewInCall->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);

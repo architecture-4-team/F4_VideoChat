@@ -43,7 +43,10 @@ void ContactListWindow::startWebview(HWND gWindow)
 						GetClientRect(lWindow, &bounds);
 						webviewControllerContact->put_Bounds(bounds);
 
-						webviewContact->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/contacts.html");
+						TCHAR _buffer[MAX_PATH];
+						DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+						_tcscat_s(_buffer, _T("/contacts.html"));
+						webviewContact->Navigate(_buffer);
 
 						EventRegistrationToken token;
 						webviewContact->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
