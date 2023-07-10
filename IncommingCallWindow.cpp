@@ -7,6 +7,7 @@ SocketClient* g_incomming_socketClient;
 std::string g_caller;
 std::string g_in_uuid;
 std::string g_in_callId;
+char strParam[1024];
 
 IncommingCallWindow::IncommingCallWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string caller, std::string myUUID, std::string myEmail, std::string callId)
 {
@@ -48,7 +49,10 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 						GetClientRect(lWindow, &bounds);
 						webviewControllerInCall->put_Bounds(bounds);
 
-						webviewInCall->Navigate(L"file:///C:/Users/yongs/Projects/F4_VideoChat/incommingCall.html");
+						TCHAR _buffer[MAX_PATH];
+						DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+						_tcscat_s(_buffer, _T("/incommingCall.html"));
+						webviewInCall->Navigate(_buffer);
 
 						EventRegistrationToken token;
 						webviewInCall->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
@@ -99,7 +103,10 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 									};
 
 									g_incomming_socketClient->SendMessageW(acceptJson.dump());
-									
+
+									std::string acceptJsonStr = acceptJson.dump();
+									acceptJsonStr.copy(strParam, sizeof(strParam) - 1);
+									PostMessage(g_incomming_main_handle, WM_ACCEPT_INCOMMING_CALL_MESSAGE, 0, (LPARAM)strParam);
 									SendMessage(g_incomming_handle, WM_CLOSE, 0, 0);
 								}
 								else if (wcscmp(message.get(), L"reject_call") == 0) //reject call

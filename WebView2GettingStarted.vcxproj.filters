@@ -51,13 +51,13 @@
     <ClCompile Include="MultiMediaSender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CallService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="html1.htm" />
-    <None Include="login.html">
-      <Filter>html</Filter>
-    </None>
     <None Include="contacts.html">
       <Filter>html</Filter>
     </None>
@@ -108,10 +108,18 @@
     <ClInclude Include="MultiMediaSender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CallService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WebView2GettingStarted.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="login.html">
+      <Filter>html</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

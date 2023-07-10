@@ -43,7 +43,11 @@ void LoginWindow::startWebview(HWND gWindow)
 						GetClientRect(lWindow, &bounds);
 						webviewController2->put_Bounds(bounds);
 
-						webview2->Navigate(L"file:///D:/Project/02.SW_Architect/03.CMU±³À°(06.12~07.14)/Project/git/F4_VideoChat/login.html");
+						TCHAR buffer[MAX_PATH];
+						DWORD res = GetCurrentDirectory(MAX_PATH, buffer);
+						_tcscat_s(buffer, _T("/login.html"));
+
+						webview2->Navigate(buffer);
 
 						EventRegistrationToken token;
 						webview2->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);

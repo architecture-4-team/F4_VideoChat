@@ -217,6 +217,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CallService.cpp" />
     <ClCompile Include="IncommingCallWindow.cpp" />
     <ClCompile Include="MultimediaManager.cpp" />
     <ClCompile Include="MultiMediaReceiver.cpp" />
@@ -239,15 +240,17 @@
     <None Include="incommingCall.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
-    <None Include="login.html">
+    <CopyFileToFolders Include="login.html">
       <DeploymentContent>true</DeploymentContent>
-    </None>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </CopyFileToFolders>
     <None Include="outgoingCall.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CallService.h" />
     <ClInclude Include="IncommingCallWindow.h" />
     <ClInclude Include="MultiMediaInterface.h" />
     <ClInclude Include="MultimediaManager.h" />

@@ -181,6 +181,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	std::string targetUuid;
 	std::wstring wsEmail;
 	json11::Json inviteJson;
+	std::wstring wStringCommon;
 
 	switch (msg)
 	{
@@ -327,7 +328,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(g_callWindow, SW_SHOW);
 		UpdateWindow(g_callWindow);
 
-		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString);
+		outGoingCallWindow = new OutgoingCallWindow(g_callWindow, socketClient, g_mainWindow, targetEmail, uuidString, emailString, callIdString);
 		outGoingCallWindow->startWebview(g_callWindow);
 
 		// send invite to server
@@ -342,6 +343,25 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		socketClient->SendMessageW(inviteJson.dump());
 
 		break;
+
+	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
+		message = reinterpret_cast<const char*>(lParam);
+		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
+		wideMessage.resize(length);
+		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
+
+		stdMessage = std::string(message);
+		receiveJson = json11::Json::parse(stdMessage, errorMessage);
+		command = receiveJson["command"].string_value();
+		contentsJsonString = receiveJson["contents"].dump();
+		contentsJson = json11::Json::parse(contentsJsonString, errorMessage);
+
+		contentsJson["uuid"].string_value();
+		callIdString = contentsJson["callid"].string_value();
+
+		wStringCommon = std::wstring(stdMessage.begin(), stdMessage.end());
+
+		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
 
 	case WM_DESTROY:
 		socketClient->Disconnect();
