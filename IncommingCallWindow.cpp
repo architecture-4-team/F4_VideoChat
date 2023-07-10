@@ -7,6 +7,7 @@ SocketClient* g_incomming_socketClient;
 std::string g_caller;
 std::string g_in_uuid;
 std::string g_in_callId;
+char strParam[1024];
 
 IncommingCallWindow::IncommingCallWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string caller, std::string myUUID, std::string myEmail, std::string callId)
 {
@@ -102,7 +103,10 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 									};
 
 									g_incomming_socketClient->SendMessageW(acceptJson.dump());
-									
+
+									std::string acceptJsonStr = acceptJson.dump();
+									acceptJsonStr.copy(strParam, sizeof(strParam) - 1);
+									PostMessage(g_incomming_main_handle, WM_ACCEPT_INCOMMING_CALL_MESSAGE, 0, (LPARAM)strParam);
 									SendMessage(g_incomming_handle, WM_CLOSE, 0, 0);
 								}
 								else if (wcscmp(message.get(), L"reject_call") == 0) //reject call

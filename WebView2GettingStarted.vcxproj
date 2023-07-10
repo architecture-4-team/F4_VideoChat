@@ -217,6 +217,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CallService.cpp" />
     <ClCompile Include="IncommingCallWindow.cpp" />
     <ClCompile Include="OutgoingCallWindow.cpp" />
     <ClCompile Include="ContactsListWindow.cpp" />
@@ -249,6 +250,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CallService.h" />
     <ClInclude Include="IncommingCallWindow.h" />
     <ClInclude Include="OutgoingCallWindow.h" />
     <ClInclude Include="common.h" />
