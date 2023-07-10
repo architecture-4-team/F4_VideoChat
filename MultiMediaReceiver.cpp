@@ -2,6 +2,14 @@
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
 
+
+static gboolean handle_receiver_video_bus_message(GstBus* bus, GstMessage* msg, gpointer data);
+static gboolean handle_receiver_audio_bus_message(GstBus* bus, GstMessage* msg, gpointer data);
+
+static GstPadProbeReturn probe_callback(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+
+int MultimediaReceiver::receieverNumbers = 0;
+
 MultimediaReceiver::MultimediaReceiver()
     : receiverVideoPipeline(nullptr), receiverAudioPipeline(nullptr),
     videoSrc(nullptr), videoCapsfilter(nullptr),
@@ -9,20 +17,24 @@ MultimediaReceiver::MultimediaReceiver()
     videoSink(nullptr), audioSrc(nullptr), audioCapsfilter(nullptr),
     jitterbufferAudio(nullptr), audioDec(nullptr), audioDepay(nullptr),
     audioConv(nullptr), audioSink(nullptr), receiverVideoBus(nullptr),
-    receiverLoop(nullptr)
+    receiverLoop(nullptr), initialized(false)
 {
-    // Initialize GStreamer
-    gst_init(nullptr, nullptr);
+    receieverNumbers += 1;
+
+    // Initialize GStreamer only one time at initialization of program
+    // gst_init(nullptr, nullptr);
 }
 
 MultimediaReceiver::~MultimediaReceiver()
 {
     cleanup();
-    gst_deinit();
+    // gst_deinit(); - do not deinit for receiver object destruction
 }
 
 bool MultimediaReceiver::initialize()
 {
+    if (initialized) return true;
+
     // Create receiver video pipeline
     receiverVideoPipeline = gst_pipeline_new("receiverVideoPipeline");
 
@@ -73,18 +85,29 @@ bool MultimediaReceiver::initialize()
     receiverAudioBus = gst_element_get_bus(receiverAudioPipeline);
 
     // Add watch to the bus to handle messages
-    gst_bus_add_watch(receiverVideoBus, (GstBusFunc)handle_receiver_audio_bus_message, this);
+    gst_bus_add_watch(receiverVideoBus, (GstBusFunc)handle_receiver_video_bus_message, this);
     gst_bus_add_watch(receiverAudioBus, (GstBusFunc)handle_receiver_audio_bus_message, this);
 
     // Get the sink pad of the sink element
     GstPad* pad = gst_element_get_static_pad(videoCapsfilter, "sink");
-    gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback)probe_callback, NULL, NULL);
+    gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, (GstPadProbeCallback)probe_callback, this, NULL);
+
+
+    /* ToDo : shall be discussed */
+    this->setJitterBuffer(50);
+    this->setRTP();
+
+    initialized = true;
 
     return true;
 }
 
 void MultimediaReceiver::cleanup()
 {
+    // Cleanup the main loop
+    g_main_loop_unref(receiverLoop);
+    receiverLoop = nullptr;
+
     if (receiverVideoPipeline)
     {
         gst_element_set_state(receiverVideoPipeline, GST_STATE_NULL);
@@ -129,6 +152,8 @@ void MultimediaReceiver::cleanup()
         gst_object_unref(receiverAudioBus);
         receiverAudioBus = nullptr;
     }
+
+    initialized = false;
 }
 
 void MultimediaReceiver::start()
@@ -139,14 +164,13 @@ void MultimediaReceiver::start()
     if (receiverAudioPipeline)
         gst_element_set_state(receiverAudioPipeline, GST_STATE_PLAYING);
 
-    // Create a GMainLoop to handle events
-    receiverLoop = g_main_loop_new(nullptr, FALSE);
-
+    if (!receiverLoop) {
+        // Create a GMainLoop to handle events
+        receiverLoop = g_main_loop_new(nullptr, FALSE);
+    }
     // Run the main loop
     g_main_loop_run(receiverLoop);
 
-    // Cleanup the main loop
-    g_main_loop_unref(receiverLoop);
 }
 
 void MultimediaReceiver::stop()
@@ -165,6 +189,30 @@ void MultimediaReceiver::setPort(int videoPort, int audioPort)
 {
     g_object_set(G_OBJECT(videoSrc), "port", videoPort, nullptr);
     g_object_set(G_OBJECT(audioSrc), "port", audioPort, nullptr);
+}
+
+// 쓰레드 함수
+DWORD WINAPI MultimediaReceiver::threadCallback(LPVOID lpParam)
+{
+    // 쓰레드에서 실행할 로직을 작성합니다.
+    MultimediaReceiver* pReceiver = static_cast<MultimediaReceiver*>(lpParam);
+
+    pReceiver->start();
+
+    WaitForSingleObject(pReceiver->hThread, INFINITE);
+    CloseHandle(pReceiver->hThread);
+    pReceiver->hThread = INVALID_HANDLE_VALUE;
+    return 0;
+}
+
+bool MultimediaReceiver::runThread()
+{
+    hThread = CreateThread(NULL, 0, MultimediaReceiver::threadCallback, this, 0, NULL);
+    if (hThread)
+    {
+        CloseHandle(hThread);  // 쓰레드 핸들 닫기
+    }
+    return true;
 }
 
 void MultimediaReceiver::setJitterBuffer(int latency)
@@ -200,6 +248,16 @@ void MultimediaReceiver::setWindow(void* hVideo)
     //g_object_set(G_OBJECT(videoDisplaySink), "window-handle", reinterpret_cast<guintptr>(hVideo), nullptr);
 }
 
+void MultimediaReceiver::changeState(int state)
+{
+    if (receiverVideoPipeline)
+        gst_element_set_state(receiverVideoPipeline, (GstState)state);
+
+    if (receiverAudioPipeline)
+        gst_element_set_state(receiverAudioPipeline, (GstState)state);
+
+}
+
 static gboolean handle_receiver_video_bus_message(GstBus* bus, GstMessage* msg, gpointer data)
 {
     MultimediaReceiver* receiver = static_cast<MultimediaReceiver*>(data);
@@ -226,7 +284,7 @@ static gboolean handle_receiver_video_bus_message(GstBus* bus, GstMessage* msg, 
     {
         GstState old_state, new_state, pending_state;
         gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
-        g_print("Receiver Video state changed from %s to %s\n", gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
+        g_print("Receiver %d Video state changed from %s to %s\n", receiver->getId(), gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
         break;
     }
     case GST_MESSAGE_BUFFERING:
@@ -269,7 +327,7 @@ static gboolean handle_receiver_audio_bus_message(GstBus* bus, GstMessage* msg, 
     {
         GstState old_state, new_state, pending_state;
         gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
-        g_print("Receiver Audio state changed from %s to %s\n", gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
+        g_print("Receiver %d Audio state changed from %s to %s\n", receiver->getId(), gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
         break;
     }
     case GST_MESSAGE_BUFFERING:
@@ -288,6 +346,7 @@ static gboolean handle_receiver_audio_bus_message(GstBus* bus, GstMessage* msg, 
 
 static GstPadProbeReturn probe_callback(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
 {
+    MultimediaReceiver* receiver = static_cast<MultimediaReceiver*>(user_data);
     GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
     guint64 bufferSize = gst_buffer_get_size(buffer);
     guint64 timestamp = GST_BUFFER_TIMESTAMP(buffer);
@@ -303,7 +362,7 @@ static GstPadProbeReturn probe_callback(GstPad* pad, GstPadProbeInfo* info, gpoi
     {
         guint64 dataRate = (totalBuffer * 8 * GST_SECOND) / durationNs;
 
-        g_print("Receive Data Rate: %lu bps\n", dataRate);
+        //g_print("Receive %d Data Rate: %lu bps\n", receiver->getId(), dataRate);
 
         totalBuffer = 0;
         prevTimestamp = timestamp;

@@ -4,6 +4,7 @@
 
 #include <gst/gst.h>
 #include <iostream>
+#include <Windows.h>
 #include "MultimediaInterface.h"
 
 class MultimediaReceiver : public MultimediaInterface {
@@ -15,9 +16,16 @@ public:
     void start();
     void stop();
     void setPort(int videoPort, int audioPort);
+    void setWindow(void* hVideo);
+    bool runThread();
+
     void setJitterBuffer(int latency);
     void setRTP();
-    void setWindow(void* hVideo);
+    void setId(int id) { this->id = id; };
+    int getId() { return id; };
+    int getTotalReceiver() { return receieverNumbers; };
+    
+    void changeState(int state); // debug
 private:
     // Pipeline
     GstElement* receiverVideoPipeline;
@@ -29,7 +37,7 @@ private:
     GstElement* videoDepay;
     GstElement* videoDec;
     GstElement* videoSink;
-
+    
     GstElement* audioSrc;
     GstElement* audioCapsfilter;
     GstElement* jitterbufferAudio;
@@ -42,10 +50,14 @@ private:
     GstBus* receiverAudioBus;
 
     GMainLoop* receiverLoop;
-};
-static gboolean handle_receiver_video_bus_message(GstBus* bus, GstMessage* msg, gpointer data);
-static gboolean handle_receiver_audio_bus_message(GstBus* bus, GstMessage* msg, gpointer data);
 
-static GstPadProbeReturn probe_callback(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+    int id; // °´Ã¼ÀÇ id
+    static int receieverNumbers;
+
+    HANDLE hThread; // Sender Thread
+    static DWORD WINAPI threadCallback(LPVOID lpParam);
+
+    bool initialized;
+};
 
 #endif  // MULTIMEDIARECEIVER_H

@@ -21,15 +21,6 @@
     <ClCompile Include="F4Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Multimedia_Manager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MultiMediaSender.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MultiMediaReceiver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SocketCommunication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,18 +60,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Multimedia_Manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MultiMediaSender.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MultiMediaReceiver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MultiMediaInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SocketCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>

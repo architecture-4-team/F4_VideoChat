@@ -1,10 +1,11 @@
 #include "MultiMediaSender.h"
-#include <gst/gst.h>
+#include <iostream>
 #include <gst/video/videooverlay.h>
 
 static gboolean handle_sender_video_bus_message(GstBus* bus, GstMessage* msg, gpointer data);
 static gboolean handle_sender_audio_bus_message(GstBus* bus, GstMessage* msg, gpointer data);
 
+std::mutex MultimediaSender::instanceMutex;
 
 MultimediaSender::MultimediaSender()
     : senderVideoPipeline(nullptr), senderAudioPipeline(nullptr),
@@ -13,20 +14,23 @@ MultimediaSender::MultimediaSender()
     queueDisplay(nullptr), queueNetwork(nullptr), videoDisplaySink(nullptr),
     audioSrc(nullptr), audioConv(nullptr), audioResample(nullptr),
     audioOpusenc(nullptr), audioPay(nullptr), audioSink(nullptr),
-    senderVideoBus(nullptr), senderAudioBus(nullptr)
+    senderVideoBus(nullptr), senderAudioBus(nullptr), 
+    mainLoop(nullptr), receiverIp("127.0.0.1"), initialized(false)
 {
-    // Initialize GStreamer
-    gst_init(nullptr, nullptr);
+    // Initialize GStreamer it is done at main
+    // gst_init(nullptr, nullptr);
 }
 
 MultimediaSender::~MultimediaSender()
 {
     cleanup();
-    gst_deinit();
+    //gst_deinit();
 }
 
 bool MultimediaSender::initialize()
 {
+	if(initialized) return true;
+
     // Create sender video pipeline
     senderVideoPipeline = gst_pipeline_new("senderVideoPipeline");
 
@@ -40,7 +44,7 @@ bool MultimediaSender::initialize()
     tee = gst_element_factory_make("tee", "tee");
     queueDisplay = gst_element_factory_make("queue", "queueDisplay");
     queueNetwork = gst_element_factory_make("queue", "queueNetwork");
-
+    
     //videoDisplaySink = gst_element_factory_make("autovideosink", "videoSinkDisplay");
     videoDisplaySink = gst_element_factory_make("d3dvideosink", "videoSinkDisplay");
 
@@ -95,11 +99,17 @@ bool MultimediaSender::initialize()
     gst_bus_add_watch(senderVideoBus, (GstBusFunc)handle_sender_video_bus_message, this);
     gst_bus_add_watch(senderAudioBus, (GstBusFunc)handle_sender_audio_bus_message, this);
 
+    initialized = true;
+
     return true;
 }
 
 void MultimediaSender::cleanup()
 {
+    // Cleanup the main loop
+    g_main_loop_unref(mainLoop);
+    mainLoop = nullptr;
+
     if (senderVideoPipeline)
     {
         gst_element_set_state(senderVideoPipeline, GST_STATE_NULL);
@@ -147,6 +157,8 @@ void MultimediaSender::cleanup()
         gst_object_unref(senderAudioBus);
         senderAudioBus = nullptr;
     }
+
+	initialized = false;
 }
 
 void MultimediaSender::start()
@@ -157,14 +169,14 @@ void MultimediaSender::start()
     if (senderAudioPipeline)
         gst_element_set_state(senderAudioPipeline, GST_STATE_PLAYING);
 
-    // Create a GMainLoop to handle events
-    mainLoop = g_main_loop_new(nullptr, FALSE);
+    if (!mainLoop) {
+        // Create a GMainLoop to handle events
+        mainLoop = g_main_loop_new(nullptr, FALSE);
+    }
 
     // Run the main loop
     g_main_loop_run(mainLoop);
 
-    // Cleanup the main loop
-    g_main_loop_unref(mainLoop);
 }
 
 void MultimediaSender::stop()
@@ -179,20 +191,54 @@ void MultimediaSender::stop()
     g_main_loop_quit(mainLoop);
 }
 
-void MultimediaSender::setVideoResolution(int width, int height)
+// 쓰레드 함수
+DWORD WINAPI MultimediaSender::threadCallback(LPVOID lpParam)
+{
+    // 쓰레드에서 실행할 로직을 작성합니다.
+    // 예: 버튼 클릭 이벤트에 대한 처리 등
+    MultimediaSender* pSender = static_cast<MultimediaSender*>(lpParam);
+
+    pSender->start();
+
+    WaitForSingleObject(pSender->hThread, INFINITE);
+    CloseHandle(pSender->hThread);
+    pSender->hThread = INVALID_HANDLE_VALUE;
+    return 0;
+}
+
+bool MultimediaSender::runThread()
+{
+    hThread = CreateThread(NULL, 0, MultimediaSender::threadCallback, this, 0, NULL);
+    if (hThread)
+    {
+        CloseHandle(hThread);  // 쓰레드 핸들 닫기
+    }
+    return true;
+}
+
+void MultimediaSender::setVideoResolution()
 {
     GstCaps* videoCaps = gst_caps_new_simple("video/x-raw",
-        "width", G_TYPE_INT, width,
-        "height", G_TYPE_INT, height,
+        "width", G_TYPE_INT, sendVideoWidth,
+        "height", G_TYPE_INT, sendVideoHeight,
         nullptr);
     g_object_set(G_OBJECT(videoCapsfilter), "caps", videoCaps, nullptr);
     gst_caps_unref(videoCaps);
 }
 
-void MultimediaSender::setReceiverIP(const std::string& ip)
+
+std::string MultimediaSender::getReceiverIP()
 {
-    g_object_set(G_OBJECT(videoSink), "host", ip.c_str(), nullptr);
-    g_object_set(G_OBJECT(audioSink), "host", ip.c_str(), nullptr);
+	printf("receiveIp:%s\n", receiverIp.c_str());
+	return receiverIp;
+}
+
+void MultimediaSender::setReceiverIP(std::string ip)
+{
+    receiverIp = ip;
+	printf("receiveIp:%s\n", receiverIp.c_str());
+    g_object_set(G_OBJECT(videoSink), "host", receiverIp.c_str(), nullptr);
+    g_object_set(G_OBJECT(audioSink), "host", receiverIp.c_str(), nullptr);
 }
 
 void MultimediaSender::setPort(int videoPort, int audioPort)
@@ -208,12 +254,35 @@ void MultimediaSender::setCameraIndex(int index)
 
 void MultimediaSender::setVideoFlipMethod(int method)
 {
+/*
+	Video-flip-method 
+	(0) Identity (no rotation)
+	(1) Rotate clockwise 90 degrees
+	(2) Rotate 180 degrees
+	(3) Rotate counter-clockwise 90 degrees
+	(4) Flip horizontally
+	(5) Flip vertically
+	(6) Flip across upper left/lower right diagonal
+	(7) Flip across upper right/lower left diagonal
+	(8) Select flip method based on image-orientation tag
+*/	
     g_object_set(G_OBJECT(videoFlip), "method", method, nullptr);
 }
 
-void MultimediaSender::setVideoEncTune(int tune)
+void MultimediaSender::setVideoEncBitRate()
 {
-    g_object_set(G_OBJECT(videoEnc), "tune", tune, nullptr);
+	GstElement *encoder = videoEnc;
+	gint bitrate;
+	g_object_get(G_OBJECT(encoder), "bitrate", &bitrate, NULL);
+	printf("EncBitRate:%u->", bitrate);
+	g_object_set(G_OBJECT(videoEnc), "bitrate", sendVideoBitRate, nullptr);
+	g_object_get(G_OBJECT(encoder), "bitrate", &bitrate, NULL);
+	printf("%u[KBps]\n", bitrate);
+}
+
+void MultimediaSender::setVideoEncTune()
+{
+    g_object_set(G_OBJECT(videoEnc), "tune", sendVideoTune, nullptr);
 }
 
 void MultimediaSender::setAudioOpusencAudioType(int audioType)
