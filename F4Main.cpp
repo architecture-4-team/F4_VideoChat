@@ -24,7 +24,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define MEDIADEBUG 0
-
+LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 #if MEDIADEBUG
 void CreateConsoleWindow();
@@ -330,6 +330,24 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		OnCreate(hWnd, msg, wParam, lParam);
 		break;
+	case WM_SIZE:
+		OnSize(hWnd, msg, wParam, lParam);
+		break;
+	case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			// TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+
+			RECT rect;
+			GetClientRect(hWnd, &rect);
+			HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 배경색을 흰색으로 설정
+			FillRect(hdc, &rect, hBrush);
+			DeleteObject(hBrush);
+
+			EndPaint(hWnd, &ps);
+		}
+		break;
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -627,8 +645,19 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    int cxClient, cyClient;
+
+    cxClient = LOWORD(lParam);
+    cyClient = HIWORD(lParam);
+
+    return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+
 #if MEDIADEBUG
-void CreateConsoleWindow()
+void SetStdOutToNewConsole()
 {
 	// Attach the console to the calling process
 	if (!AttachConsole(ATTACH_PARENT_PROCESS))
