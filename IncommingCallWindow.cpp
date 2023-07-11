@@ -1,5 +1,4 @@
 #include "IncommingCallWindow.h"
-#include "common.h"
 
 HWND g_incomming_handle;
 HWND g_incomming_main_handle;
@@ -107,6 +106,7 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 									std::string acceptJsonStr = acceptJson.dump();
 									acceptJsonStr.copy(strParam, sizeof(strParam) - 1);
 									PostMessage(g_incomming_main_handle, WM_ACCEPT_INCOMMING_CALL_MESSAGE, 0, (LPARAM)strParam);
+									//CallService::GetInstance().SendMessageToHandler(WM_ACCEPT_INCOMMING_CALL_MESSAGE, 0, (LPARAM)strParam);
 									SendMessage(g_incomming_handle, WM_CLOSE, 0, 0);
 								}
 								else if (wcscmp(message.get(), L"reject_call") == 0) //reject call

@@ -82,6 +82,7 @@ void SocketClient::ReceiveThread() {
             buffer[bytesReceived] = '\0';
             std::cout << "Received: " << buffer << std::endl;
             PostMessage(m_mainWindow, WM_SOCKET_MESSAGE, 0, (LPARAM)buffer);
+            /*m_callService->SendMessageToHandler(WM_TEST_MESSAGE, NULL, NULL);*/
         }
         else if (bytesReceived == 0) {
             // ¿¬°áÀÌ ´ÝÈù °æ¿ì
