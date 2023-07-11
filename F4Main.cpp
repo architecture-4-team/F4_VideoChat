@@ -75,7 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	std::string serverAddress = jsonConfig["server_address"].string_value();
 	int serverPort = jsonConfig["server_port"].int_value();
-	std::string uiServerAddress = jsonConfig["ui_server_address"].string_value();
+	uiServerAddress = jsonConfig["ui_server_address"].string_value();
 	std::string uiLocal = jsonConfig["ui_local"].string_value();
 
 	socketClient = new SocketClient(serverAddress.c_str(), serverPort);
@@ -128,7 +128,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Create the login window
 	hLoginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 600, 600, hMainWindow, nullptr, hInstance, nullptr);
+		400, 50, 600, 800, hMainWindow, nullptr, hInstance, nullptr);
 
 	if (!hLoginWindow)
 	{
@@ -158,8 +158,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow, uiServerAddress);
 	loginWindow->startWebview(g_loginWindow);
-
-
 
 	// Message loop
 	MSG msg;
@@ -243,7 +241,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (LOWORD(wParam) == 1)
 		{
 			HWND hContactWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Contact List"), WS_OVERLAPPEDWINDOW,
-				CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, nullptr, nullptr, g_hInstance, nullptr);
+				CW_USEDEFAULT, CW_USEDEFAULT, 600, 800, nullptr, nullptr, g_hInstance, nullptr);
 			if (!hContactWindow)
 			{
 				MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
