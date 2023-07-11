@@ -234,7 +234,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ShowWindow(hContactWindow, SW_SHOW);
 			UpdateWindow(hContactWindow);
 
-			ContactListWindow* contactsListWindow = new ContactListWindow(hContactWindow, socketClient, g_mainWindow);
+			ContactListWindow* contactsListWindow = new ContactListWindow(hContactWindow, socketClient, g_mainWindow, uiServerAddress);
 			contactsListWindow->startWebview(g_contactWindow, callService->GetMyUUID());
 
 		}

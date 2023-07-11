@@ -29,5 +29,6 @@ public:
 
 private:
 	HWND hWindow;
+	std::string g_address;
 };
 
