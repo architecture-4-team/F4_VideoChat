@@ -162,7 +162,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			if (m_outCallWindow) {
 				SendMessage(m_outCallWindow, WM_CLOSE, 0, 0);
 			}
-			SetupCall(1);
+			SetupCall(3);
 		}
         break;
 
@@ -237,7 +237,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
 
-		SetupCall(1);
+		SetupCall(3);
 		break;
 	case WM_BYE_MESSAGE:
 		EndCall();
@@ -293,18 +293,18 @@ void CallService::SetupCall(int numCalls) {
 		mManager.setupReceiver(windows->videoWindow4, 10001, 10002, 4); // third video setup
 		mManager.playReceiver(4);
 	case 3:
-		mManager.setupReceiver(windows->videoWindow3, 10001, 10002, 3); // third video setup
+		mManager.setupReceiver(windows->videoWindow3, 5005, 5006, 3); // third video setup
 		mManager.playReceiver(3);
 	case 2:
-		mManager.setupReceiver(windows->videoWindow2, 10001, 10002, 2); // second video setup
+		mManager.setupReceiver(windows->videoWindow2, 5003, 5004, 2); // second video setup
 		mManager.playReceiver(2);
 	case 1:
-		mManager.setupReceiver(windows->videoWindow1, 10001, 10002, 1); // first video setup
+		mManager.setupReceiver(windows->videoWindow1, 5001, 5002, 1); // first video setup
 		mManager.playReceiver(1);
 	default:
 		break;
 	}
-	mManager.setupSender(windows->videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
+	mManager.setupSender(windows->videoWindow0, "192.168.2.8", 10001, 10002); // init manager with my video view
 	mManager.makeCall(); // Receiver is decided by server application, just send video and audio
 }
 
