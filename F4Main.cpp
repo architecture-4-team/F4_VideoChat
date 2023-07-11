@@ -13,17 +13,6 @@
 #include <mmsystem.h>
 #include "CallService.h"
 #include "IncommingCallWindow.h"
-
-#include <gst/gst.h>
-
-using namespace Microsoft::WRL;
-
-// Pointer to WebViewController
-static wil::com_ptr<ICoreWebView2Controller> webviewController;
-
-// Pointer to WebView window
-static wil::com_ptr<ICoreWebView2> webview;
-
 #include "OutgoingCallWindow.h"
 #include "Util.h"
 
@@ -34,32 +23,17 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+#define MEDIADEBUG 0
 
-<<<<<<< HEAD
-#define MEDIADEBUG 1
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-json11::Json testJson = json11::Json::object{
-	{"command", "ACCEPT"},
-	{"contents", json11::Json::object {
-		{"uuid", "1234"},
-		{"target", "abc@email.email"}}
-	}
-};
-std::string testJsonStr = testJson.dump();
-const char* jsonCStr = testJsonStr.c_str();
 #if MEDIADEBUG
-void CreateConsoleWindow(void);
+static void SetStdOutToNewConsole(void);
+static FILE* pCout = NULL;
 #endif
 
-//SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
-
-
-SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
-=======
 std::string uiServerAddress = "";
 
-HWND g_hEdit;
->>>>>>> origin/UI_works
+MultimediaManager& mManager = MultimediaManager::GetInstance();
 
 VideoWindows windows;
 
@@ -82,7 +56,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hMainWindow;
 	HWND hLoginWindow;
 
-	//CreateConsoleWindow();
+	//SetStdOutToNewConsole();
 
 	//gst_debug_set_default_threshold(GST_LEVEL_FIXME);
 	//gst_debug_set_active(true);
@@ -104,8 +78,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	std::string uiServerAddress = jsonConfig["ui_server_address"].string_value();
 	std::string uiLocal = jsonConfig["ui_local"].string_value();
 
-	socketClient = new SocketClient("127.0.0.1", serverPort);
-
+	socketClient = new SocketClient(serverAddress, serverPort);
 
 	// Register the main window class
 	WNDCLASSEX wcex = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, MainWndProc, 0, 0, hInstance, nullptr,
@@ -128,7 +101,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Create the main window
 	hMainWindow = CreateWindowEx(0, _T("MainWindowClass"), _T("Main Window"), WS_OVERLAPPEDWINDOW,
 		0, 0, 800, 600, nullptr, nullptr, hInstance, nullptr);
-	
+
 	if (!hMainWindow)
 	{
 		MessageBox(nullptr, _T("Failed to create main window."), _T("Error"), MB_ICONERROR | MB_OK);
@@ -172,11 +145,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	callService->SetVideoHandles(&windows);
 	callService->ProcessMessages();
-<<<<<<< HEAD
-	socketClient->Connect(hMainWindow);
-=======
->>>>>>> origin/UI_works
-	
+
 	// Show and update the main window
 	ShowWindow(hMainWindow, SW_MAXIMIZE);
 	UpdateWindow(hMainWindow);
@@ -185,14 +154,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(hLoginWindow, nCmdShow);
 	UpdateWindow(hLoginWindow);
 
-<<<<<<< HEAD
-	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow);
-=======
 	socketClient->Connect(hMainWindow);
 
 	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow, uiServerAddress);
->>>>>>> origin/UI_works
 	loginWindow->startWebview(g_loginWindow);
+
+
 
 	// Message loop
 	MSG msg;
@@ -223,8 +190,6 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	json11::Json inviteJson;
 	std::wstring wStringCommon;
 
-
-
 	switch (msg)
 	{
 	case WM_SOCKET_MESSAGE:
@@ -244,7 +209,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(g_inCallWindow, SW_SHOW);
 		UpdateWindow(g_inCallWindow);
 
-		incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow, 
+		incommingCallWindow = new IncommingCallWindow(g_inCallWindow, socketClient, g_mainWindow,
 			callService->GetDestEmail(), callService->GetMyUUID(), callService->GetMyEmail(), callService->GetCallId());
 		incommingCallWindow->startWebview(g_inCallWindow);
 
@@ -262,7 +227,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(g_outCallWindow, SW_SHOW);
 		UpdateWindow(g_outCallWindow);
 
-		outGoingCallWindow = new OutgoingCallWindow(g_outCallWindow, socketClient, g_mainWindow, 
+		outGoingCallWindow = new OutgoingCallWindow(g_outCallWindow, socketClient, g_mainWindow,
 			callService->GetDestEmail(), callService->GetMyUUID(), callService->GetMyEmail(), callService->GetCallId());
 		outGoingCallWindow->startWebview(g_outCallWindow);
 
@@ -275,7 +240,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_COMMAND:
-		if (LOWORD(wParam) == 1) 
+		if (LOWORD(wParam) == 1)
 		{
 			HWND hContactWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Contact List"), WS_OVERLAPPEDWINDOW,
 				CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, nullptr, nullptr, g_hInstance, nullptr);
@@ -295,7 +260,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			contactsListWindow->startWebview(g_contactWindow, callService->GetMyUUID());
 
 		}
-		else if (LOWORD(wParam) == 2) // bye button
+		else if (LOWORD(wParam) == 2)
 		{
 			json11::Json byeJson = json11::Json::object{
 				{"command", "BYE"},
@@ -304,71 +269,52 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						{"callid", callService->GetCallId()}
 					}
 				}
-			}; 
+			};
 			socketClient->SendMessageW(byeJson.dump());
-
-			CallService::GetInstance().SendMessageToHandler(WM_BYE_MESSAGE, 0, 0);
 		}
 #if MEDIADEBUG
-
-		// 메뉴 선택을 구문 분석합니다:
+		// �޴� ������ ���� �м��մϴ�:
 		switch (LOWORD(wParam))
 		{
 		case IDC_START_SENDER:
-			//mManager.setupSender(videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
+			mManager.setupSender(videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
 			// Server Ip has been set up at initialize
-			//mManager.makeCall(); // Receiver is decided by server application, just send video and audio
-			testJson = json11::Json::object{
-				{"command", "ACCEPT"},
-				{"contents", json11::Json::object {
-					{"uuid", "g_in_uuid"},
-					{"callid", "g_in_callId"}}
-				}
-			};
-			testJsonStr = testJson.dump();
-			jsonCStr = testJsonStr.c_str();
-			CallService::GetInstance().SendMessageToHandler(WM_RECEIVED_MESSAGE, 0, (LPARAM)jsonCStr);
+			mManager.makeCall(); // Receiver is decided by server application, just send video and audio
 			break;
 		case IDC_STOP_SENDER:
-			//mManager.pauseCall();
+			mManager.pauseCall();
 			break;
 		case IDC_START_RECEIVER:
-			//mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // 1 video setup
-			//mManager.playReceiver(1);
+			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
+			mManager.playReceiver(1);
 			break;
 		case IDC_STOP_RECEIVER:
-			//mManager.pauseReceiver(1);
+			mManager.pauseReceiver(1);
 			break;
 		case IDC_START_RECEIVER2:
-			//mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // 2 video setup
-			//mManager.playReceiver(2);
+			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // first video setup
+			mManager.playReceiver(2);
 			break;
 		case IDC_STOP_RECEIVER2:
-			//mManager.pauseReceiver(2);
+			mManager.pauseReceiver(2);
 			break;
 		case IDC_START_RECEIVER3:
-			//mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // 3 video setup
-			//mManager.playReceiver(3);
+			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // first video setup
+			mManager.playReceiver(3);
 			break;
 		case IDC_STOP_RECEIVER3:
-			//mManager.pauseReceiver(3);
-			break;
-		case IDC_START_RECEIVER4:
-			//mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // 4 video setup
-			//mManager.playReceiver(4);
-			break;
-		case IDC_STOP_RECEIVER4:
-			//mManager.pauseReceiver(4);
+			mManager.pauseReceiver(3);
 			break;
 		case IDC_ACCEPT_ALL:
-			//mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
-			//mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // second video setup
-			//mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // third video setup
-			//mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // third video setup
-			//mManager.playReceiver(1);
-			//mManager.playReceiver(2);
-			//mManager.playReceiver(3);
-			//mManager.playReceiver(4);
+			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
+			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // second video setup
+			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // third video setup
+			mManager.makeReceiverStateChange(1, GST_STATE_PAUSED);
+			mManager.makeReceiverStateChange(2, GST_STATE_PAUSED);
+			mManager.makeReceiverStateChange(3, GST_STATE_PAUSED);
+			mManager.playReceiver(1);
+			mManager.playReceiver(2);
+			mManager.playReceiver(3);
 			break;
 		}
 #endif
@@ -396,7 +342,6 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-<<<<<<< HEAD
 #if MEDIADEBUG
 typedef enum
 {
@@ -694,5 +639,3 @@ void CreateConsoleWindow()
 	std::ios::sync_with_stdio();
 }
 #endif
-=======
->>>>>>> origin/UI_works
