@@ -61,7 +61,20 @@ bool MultimediaManager::setupSender(void* hVideo, std::string ip, int videoPort,
     dynamic_cast<MultimediaSender&>(mSender).setVideoEncBitRate();
 
     // Set audio encoding type (if necessary)
-    dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2051); // Restricted low delay
+    //int audioType, 
+	//generic (2049), voice (2048), restricted-lowdelay (2051) 
+	//int bandwidth
+	//narrowband (1101), mediumband(1102), wideband(1103), superwideband (1104), fullband (1105), auto (-1000)
+	//int bitrate
+	//default : 64000
+	//int bitrateType
+	//cbr (0) – CBR, vbr (1), constrained-vbr (2)
+
+    dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2051, 1105, 64000, 2); //fist pre-set
+    //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2048, 1105, 192000, 1); //High-voip Quality
+    //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2049, 1105, 192000, 0); //High Quality
+    //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2048, 1103, 128000, 1); //Mid Quality
+	//dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2048, -1000, 64000, 2); //Low voip
 
     mSender.setWindow(hVideo);
 
