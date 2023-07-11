@@ -137,17 +137,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Create the login window
-	hLoginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
+	g_loginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
 		400, 50, 600, 800, hMainWindow, nullptr, hInstance, nullptr);
 
-	if (!hLoginWindow)
+	if (!g_loginWindow)
 	{
 		MessageBox(hMainWindow, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
 
 	g_mainWindow = hMainWindow;
-	g_loginWindow = hLoginWindow;
 
 	if (!callService->Initialize(g_mainWindow, socketClient, g_loginWindow, g_contactWindow, g_outCallWindow, g_inCallWindow, g_hInstance)) {
 		MessageBox(hMainWindow, _T("Failed to create call service."), _T("Error"), MB_ICONERROR | MB_OK);
@@ -161,12 +160,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UpdateWindow(hMainWindow);
 
 	// Show and update the main window
-	ShowWindow(hLoginWindow, nCmdShow);
-	UpdateWindow(hLoginWindow);
+	ShowWindow(g_loginWindow, SW_SHOW);
+	UpdateWindow(g_loginWindow);
 
 	socketClient->Connect(hMainWindow);
 
-	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow, uiServerAddress);
+	LoginWindow* loginWindow = new LoginWindow(g_loginWindow, socketClient, g_mainWindow, uiServerAddress);
 	loginWindow->startWebview(g_loginWindow);
 
 	// Message loop
@@ -359,6 +358,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
+		return 0;
 		break;
 
 	case WM_DESTROY:
