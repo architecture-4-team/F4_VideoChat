@@ -9,6 +9,19 @@
 #define IDC_CUSTOM2                     1003
 #define IDC_NETADDRESS1                 1004
 
+#define IDC_START_SENDER		130
+#define IDC_STOP_SENDER		    132
+#define IDC_START_RECEIVER		131
+#define IDC_STOP_RECEIVER	    133
+#define IDC_START_RECEIVER2		134
+#define IDC_STOP_RECEIVER2	    135
+#define IDC_START_RECEIVER3		136
+#define IDC_STOP_RECEIVER3	    137
+#define IDC_START_RECEIVER4		138
+#define IDC_STOP_RECEIVER4	    139
+#define IDC_ACCEPT_ALL	        140
+
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
