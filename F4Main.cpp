@@ -78,7 +78,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	std::string uiServerAddress = jsonConfig["ui_server_address"].string_value();
 	std::string uiLocal = jsonConfig["ui_local"].string_value();
 
-	socketClient = new SocketClient(serverAddress, serverPort);
+	socketClient = new SocketClient(serverAddress.c_str(), serverPort);
 
 	// Register the main window class
 	WNDCLASSEX wcex = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, MainWndProc, 0, 0, hInstance, nullptr,
