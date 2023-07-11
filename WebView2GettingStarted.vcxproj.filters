@@ -54,6 +54,12 @@
     <ClCompile Include="CallService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditInfoWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -65,6 +71,9 @@
       <Filter>html</Filter>
     </None>
     <None Include="incommingCall.html">
+      <Filter>html</Filter>
+    </None>
+    <None Include="editInfo.html">
       <Filter>html</Filter>
     </None>
   </ItemGroup>
@@ -111,6 +120,12 @@
     <ClInclude Include="CallService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditInfoWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WebView2GettingStarted.rc">
@@ -121,5 +136,8 @@
     <CopyFileToFolders Include="login.html">
       <Filter>html</Filter>
     </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="config.json" />
   </ItemGroup>
 </Project>

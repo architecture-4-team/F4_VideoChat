@@ -218,6 +218,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CallService.cpp" />
+    <ClCompile Include="EditInfoWindow.cpp" />
     <ClCompile Include="IncommingCallWindow.cpp" />
     <ClCompile Include="MultimediaManager.cpp" />
     <ClCompile Include="MultiMediaReceiver.cpp" />
@@ -238,6 +239,9 @@
     <None Include="contacts.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="editInfo.html">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="incommingCall.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
@@ -252,6 +256,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CallService.h" />
+    <ClInclude Include="EditInfoWindow.h" />
     <ClInclude Include="IncommingCallWindow.h" />
     <ClInclude Include="MultiMediaInterface.h" />
     <ClInclude Include="MultimediaManager.h" />

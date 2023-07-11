@@ -14,6 +14,7 @@
 #include "CallService.h"
 #include "IncommingCallWindow.h"
 #include "OutgoingCallWindow.h"
+#include "EditInfoWindow.h"
 #include "Util.h"
 
 // Global variables
@@ -52,6 +53,7 @@ HWND g_mainWindow;
 HWND g_contactWindow;
 HWND g_outCallWindow;
 HWND g_inCallWindow;
+HWND g_editInfoWindow;
 
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
@@ -127,9 +129,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// Create a call end button
+	// Create a end call button
 	HWND hCallEndButton = CreateWindowEx(0, _T("BUTTON"), _T("End Call"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(2), hInstance, nullptr);
+	if (!hCallEndButton)
+	{
+		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
+		return 1;
+	}
+
+	// Create a change user info button
+	HWND hEditInfoButton = CreateWindowEx(0, _T("BUTTON"), _T("My Info"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		250, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(3), hInstance, nullptr);
 	if (!hCallEndButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
@@ -281,6 +292,25 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// Call end
 			callService->SendMessageToHandler(WM_BYE_MESSAGE, wParam, lParam);
+		}
+		else if (LOWORD(wParam) == 3)
+		{
+			HWND hEditInfoWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Contact List"), WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, 600, 800, nullptr, nullptr, g_hInstance, nullptr);
+			if (!hEditInfoWindow)
+			{
+				MessageBox(hWnd, _T("Failed to create child window."), _T("Error"), MB_ICONERROR | MB_OK);
+				return 1;
+			}
+
+			g_editInfoWindow = hEditInfoWindow;
+
+			// Show the child window
+			ShowWindow(hEditInfoWindow, SW_SHOW);
+			UpdateWindow(hEditInfoWindow);
+
+			EditInfoWindow* editInfoListWindow = new EditInfoWindow(hEditInfoWindow, socketClient, g_mainWindow, uiServerAddress);
+			editInfoListWindow->startWebview(g_editInfoWindow, callService->GetMyUUID());
 		}
 #if MEDIADEBUG
 		
