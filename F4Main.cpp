@@ -14,6 +14,7 @@
 #include "CallService.h"
 #include "IncommingCallWindow.h"
 #include "OutgoingCallWindow.h"
+#include "Util.h"
 
 // Global variables
 HINSTANCE g_hInstance;
@@ -23,6 +24,10 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
+
+std::string uiServerAddress = "";
+
+HWND g_hEdit;
 
 HWND g_loginWindow;
 HWND g_mainWindow;
@@ -34,6 +39,8 @@ OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
 
 CallService* callService = &CallService::GetInstance();
+Util* util = new Util();
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -117,6 +124,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(hLoginWindow, nCmdShow);
 	UpdateWindow(hLoginWindow);
 
+	// try load a config file
+	TCHAR _buffer[MAX_PATH];
+	DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+	_tcscat_s(_buffer, _T("/config.json"));
+
+	util->LoadFile(*_buffer);
 
 	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow);
 	loginWindow->startWebview(g_loginWindow);
@@ -217,7 +230,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			UpdateWindow(hContactWindow);
 
 			ContactListWindow* contactsListWindow = new ContactListWindow(hContactWindow, socketClient, g_mainWindow);
-			contactsListWindow->startWebview(g_contactWindow);
+			contactsListWindow->startWebview(g_contactWindow, callService->GetMyUUID());
 
 		}
 		else if (LOWORD(wParam) == 2)
@@ -253,3 +266,4 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
+

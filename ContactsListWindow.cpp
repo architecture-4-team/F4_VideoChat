@@ -5,6 +5,8 @@ HWND g_contact_handle;
 HWND g_contact_main_handle;
 SocketClient* g_contact_socketClient;
 char buffer[1024];
+Util* mutil = new Util();
+std::string g_uuid;
 
 ContactListWindow::ContactListWindow(HWND window, SocketClient* socket, HWND mainWindow)
 {
@@ -13,8 +15,9 @@ ContactListWindow::ContactListWindow(HWND window, SocketClient* socket, HWND mai
 	g_contact_main_handle = mainWindow;
 };
 
-void ContactListWindow::startWebview(HWND gWindow)
+void ContactListWindow::startWebview(HWND gWindow, std::string uuid)
 {
+	g_uuid = uuid;
 	g_contact_handle = gWindow;
 	HWND lWindow = hWindow;
 	// show login webview
@@ -44,9 +47,16 @@ void ContactListWindow::startWebview(HWND gWindow)
 						webviewControllerContact->put_Bounds(bounds);
 
 						TCHAR _buffer[MAX_PATH];
+							
 						DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
 						_tcscat_s(_buffer, _T("/contacts.html"));
 						webviewContact->Navigate(_buffer);
+
+						/*
+						std::string str = "http://192.168.2.9:3000/contactList?uuid=" + g_uuid;
+						mutil->SetStringToTCharBuffer(str, _buffer, MAX_PATH);
+						webviewContact->Navigate(_buffer);
+						*/
 
 						EventRegistrationToken token;
 						webviewContact->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);

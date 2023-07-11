@@ -10,6 +10,7 @@
 #include "WebView2.h"
 #include "json11.hpp"
 #include "CallService.h"
+#include "util.h"
 
 using namespace Microsoft::WRL;
 // Pointer to WebViewController
@@ -24,7 +25,7 @@ class ContactListWindow
 public:
 	ContactListWindow(HWND window, SocketClient* socketClient, HWND mainWindow);
 	~ContactListWindow();
-	void startWebview(HWND gWindow);
+	void startWebview(HWND gWindow, std::string uuid);
 
 private:
 	HWND hWindow;

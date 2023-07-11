@@ -229,6 +229,7 @@
     <ClCompile Include="socketClient.cpp" />
     <ClCompile Include="SocketCommunication.cpp" />
     <ClCompile Include="json11.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="html1.htm">
@@ -264,9 +265,15 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="socketClient.h" />
     <ClInclude Include="SocketCommunication.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WebView2GettingStarted.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="config.json">
+      <FileType>Text</FileType>
+    </Xml>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
