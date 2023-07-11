@@ -73,3 +73,24 @@ void Util::SetStringToTCharBuffer(const std::string& str, TCHAR* buffer, int buf
 	strncpy_s(buffer, bufferSize, str.c_str(), _TRUNCATE);
 #endif
 }
+
+void Util::PlayOutCall()
+{
+    TCHAR _buffer[MAX_PATH];
+    DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+    _tcscat_s(_buffer, _T("/outcallsound.wav"));
+    PlaySound(_buffer, nullptr, SND_FILENAME | SND_ASYNC | SND_LOOP);
+}
+
+void Util::PlayRing()
+{
+    TCHAR _buffer[MAX_PATH];
+    DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+    _tcscat_s(_buffer, _T("/phone-ring.wav"));
+    PlaySound(_buffer, nullptr, SND_FILENAME | SND_ASYNC | SND_LOOP);
+}
+
+void Util::StopPlaying()
+{
+    PlaySound(nullptr, nullptr, 0);
+}

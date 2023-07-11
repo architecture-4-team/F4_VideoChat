@@ -6,6 +6,7 @@
 #include "common.h"
 #include "json11.hpp"
 #include "MultimediaManager.h"
+#include "Util.h"
 
 typedef struct {
     HWND videoWindow0; // for Sender

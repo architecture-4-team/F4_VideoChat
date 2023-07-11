@@ -26,7 +26,7 @@ void EditInfoWindow::startWebview(HWND gWindow, std::string uuid)
 		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
 			[lWindow](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 
-				// Create a CoreWebView2Controller and get the associated CoreWebView2 whose parent is the main window hWnd
+				// Create a CoreWebView2Controller and get the associated CoreWebView2 whose parent is the main window g_editInfo_handle
 				env->CreateCoreWebView2Controller(lWindow, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
 					[lWindow](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
 						if (controller != nullptr) {

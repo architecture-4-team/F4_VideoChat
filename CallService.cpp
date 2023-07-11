@@ -97,6 +97,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		if (command == "INVITE")
 		{
+			Util::GetInstance().PlayRing();
 			std::string callerEmail;
 			callerEmail = contentsJson["email"].string_value();
 			callIdString = contentsJson["callid"].string_value();
@@ -153,6 +154,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		else if (command == "ACCEPT")
 		{
+			Util::GetInstance().StopPlaying();
 			// When I get accept message from callee
 			std::string uuid;
 			std::string callId;
@@ -191,6 +193,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		break;
 
 	case WM_CONTACT_MESSAGE:
+		Util::GetInstance().PlayOutCall();
 		message = reinterpret_cast<const char*>(lParam);
 		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
 		wideMessage.resize(length);
@@ -223,6 +226,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
 		// Accept Response to the caller
+		Util::GetInstance().StopPlaying();
 		message = reinterpret_cast<const char*>(lParam);
 		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
 		wideMessage.resize(length);

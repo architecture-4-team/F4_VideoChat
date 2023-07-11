@@ -17,6 +17,7 @@
 #include "EditInfoWindow.h"
 #include "Util.h"
 
+
 // Global variables
 HINSTANCE g_hInstance;
 
