@@ -5,6 +5,15 @@
 #include <tchar.h>
 #include "common.h"
 #include "json11.hpp"
+#include "MultimediaManager.h"
+
+typedef struct {
+    HWND videoWindow0; // for Sender
+    HWND videoWindow1; // for Receiver1
+    HWND videoWindow2; // for Receiver2
+    HWND videoWindow3; // for Receiver3
+    HWND videoWindow4; // for Receiver4
+}VideoWindows;
 
 class CallService {
 public:
@@ -27,6 +36,7 @@ public:
     void SetDestEmail(std::string email);
 
     void UpdateOutCallHandle(HWND handle);
+    void SetVideoHandles(VideoWindows* windows);
 
 private:
     HWND hWnd_;
@@ -41,6 +51,12 @@ private:
     HWND m_outCallWindow;
     HWND m_inCallWindow;
     HINSTANCE m_hInstance;
+
+    MultimediaManager& mManager = MultimediaManager::GetInstance();
+    VideoWindows* windows;
+    void SetupCall(int numCalls);
+    void EndCall();
+
     static LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 };

@@ -116,8 +116,10 @@ void MultimediaManager::endCall()
 
     for (auto& pair : receiverMap) {
         pair.second->stop();
+        pair.second->cleanup();
         delete pair.second;  // Delete the object
     }
+    receiverMap.clear();  // Clear the map
 }
 
 // For debugging

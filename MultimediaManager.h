@@ -37,6 +37,5 @@ private:
     //std::vector<MultimediaInterface*> receiverList;
     std::unordered_map<int, MultimediaInterface*> receiverMap;
 
-    
 };
 #endif // MULTIMEDIAMANAGER_H

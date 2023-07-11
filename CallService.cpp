@@ -152,6 +152,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		else if (command == "ACCEPT")
 		{
+			// When I get accept message from callee
 			std::string uuid;
 			std::string callId;
 			uuid = contentsJson["uuid"].string_value();
@@ -161,6 +162,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			if (m_outCallWindow) {
 				SendMessage(m_outCallWindow, WM_CLOSE, 0, 0);
 			}
+			SetupCall(1);
 		}
         break;
 
@@ -217,6 +219,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		break;
 
 	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
+		// Accept Response to the caller
 		message = reinterpret_cast<const char*>(lParam);
 		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
 		wideMessage.resize(length);
@@ -234,6 +237,11 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
 
+		SetupCall(1);
+		break;
+	case WM_BYE_MESSAGE:
+		EndCall();
+		break;
     default:
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }
@@ -275,4 +283,42 @@ void CallService::SetDestEmail(std::string email) {
 
 void CallService::UpdateOutCallHandle(HWND handle) {
 	m_outCallWindow = handle;
+}
+
+void CallService::SetupCall(int numCalls) {
+	// Intentionally not having the break
+	switch(numCalls)
+	{
+	case 4:
+		mManager.setupReceiver(windows->videoWindow4, 10001, 10002, 4); // third video setup
+		mManager.playReceiver(4);
+	case 3:
+		mManager.setupReceiver(windows->videoWindow3, 10001, 10002, 3); // third video setup
+		mManager.playReceiver(3);
+	case 2:
+		mManager.setupReceiver(windows->videoWindow2, 10001, 10002, 2); // second video setup
+		mManager.playReceiver(2);
+	case 1:
+		mManager.setupReceiver(windows->videoWindow1, 10001, 10002, 1); // first video setup
+		mManager.playReceiver(1);
+	default:
+		break;
+	}
+	mManager.setupSender(windows->videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
+	mManager.makeCall(); // Receiver is decided by server application, just send video and audio
+}
+
+void CallService::EndCall() {
+	mManager.endCall();
+
+	InvalidateRect(windows->videoWindow1, NULL, TRUE);
+	UpdateWindow(windows->videoWindow1);
+
+	InvalidateRect(windows->videoWindow0, NULL, TRUE);
+	UpdateWindow(windows->videoWindow0);
+
+}
+
+void CallService::SetVideoHandles(VideoWindows* windows) {
+	this->windows = windows;
 }

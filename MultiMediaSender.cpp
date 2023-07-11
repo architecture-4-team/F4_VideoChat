@@ -209,11 +209,7 @@ DWORD WINAPI MultimediaSender::threadCallback(LPVOID lpParam)
 bool MultimediaSender::runThread()
 {
     hThread = CreateThread(NULL, 0, MultimediaSender::threadCallback, this, 0, NULL);
-    if (hThread)
-    {
-        CloseHandle(hThread);  // 쓰레드 핸들 닫기
-    }
-    return true;
+    return hThread != NULL;
 }
 
 void MultimediaSender::setVideoResolution()

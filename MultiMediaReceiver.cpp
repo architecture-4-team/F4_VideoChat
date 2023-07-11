@@ -208,11 +208,8 @@ DWORD WINAPI MultimediaReceiver::threadCallback(LPVOID lpParam)
 bool MultimediaReceiver::runThread()
 {
     hThread = CreateThread(NULL, 0, MultimediaReceiver::threadCallback, this, 0, NULL);
-    if (hThread)
-    {
-        CloseHandle(hThread);  // 쓰레드 핸들 닫기
-    }
-    return true;
+
+    return hThread != NULL;
 }
 
 void MultimediaReceiver::setJitterBuffer(int latency)

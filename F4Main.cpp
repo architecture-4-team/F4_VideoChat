@@ -14,7 +14,6 @@
 #include "CallService.h"
 #include "IncommingCallWindow.h"
 
-#include "MultimediaManager.h"
 #include <gst/gst.h>
 
 using namespace Microsoft::WRL;
@@ -27,7 +26,6 @@ static wil::com_ptr<ICoreWebView2> webview;
 
 #include "OutgoingCallWindow.h"
 
-
 // Global variables
 HINSTANCE g_hInstance;
 
@@ -37,8 +35,16 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 
 #define MEDIADEBUG 1
-
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+json11::Json testJson = json11::Json::object{
+	{"command", "ACCEPT"},
+	{"contents", json11::Json::object {
+		{"uuid", "1234"},
+		{"target", "abc@email.email"}}
+	}
+};
+std::string testJsonStr = testJson.dump();
+const char* jsonCStr = testJsonStr.c_str();
 #if MEDIADEBUG
 void CreateConsoleWindow(void);
 #endif
@@ -48,14 +54,7 @@ void CreateConsoleWindow(void);
 
 SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 
-MultimediaManager& mManager = MultimediaManager::GetInstance();
-
-HWND videoWindow0; // Video 출력용 윈도우 핸들
-HWND videoWindow1; // Video 출력용 윈도우 핸들
-HWND videoWindow2; // Video 출력용 윈도우 핸들
-HWND videoWindow3; // Video 출력용 윈도우 핸들
-HWND videoWindow4; // Video 출력용 윈도우 핸들
-
+VideoWindows windows;
 
 HWND g_loginWindow;
 HWND g_mainWindow;
@@ -65,7 +64,6 @@ HWND g_inCallWindow;
 
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
-
 
 CallService* callService = &CallService::GetInstance();
 
@@ -145,9 +143,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MessageBox(hMainWindow, _T("Failed to create call service."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
+	callService->SetVideoHandles(&windows);
 	callService->ProcessMessages();
 	socketClient->Connect(hMainWindow);
-
+	
 	// Show and update the main window
 	ShowWindow(hMainWindow, SW_MAXIMIZE);
 	UpdateWindow(hMainWindow);
@@ -156,11 +155,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(hLoginWindow, nCmdShow);
 	UpdateWindow(hLoginWindow);
 
-
 	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow);
 	loginWindow->startWebview(g_loginWindow);
-
-
 
 	// Message loop
 	MSG msg;
@@ -190,6 +186,8 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	std::wstring wsEmail;
 	json11::Json inviteJson;
 	std::wstring wStringCommon;
+
+
 
 	switch (msg)
 	{
@@ -261,7 +259,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			contactsListWindow->startWebview(g_contactWindow);
 
 		}
-		else if (LOWORD(wParam) == 2)
+		else if (LOWORD(wParam) == 2) // bye button
 		{
 			json11::Json byeJson = json11::Json::object{
 				{"command", "BYE"},
@@ -272,56 +270,69 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 			}; 
 			socketClient->SendMessageW(byeJson.dump());
+
+			CallService::GetInstance().SendMessageToHandler(WM_BYE_MESSAGE, 0, 0);
 		}
 #if MEDIADEBUG
+
 		// 메뉴 선택을 구문 분석합니다:
 		switch (LOWORD(wParam))
 		{
 		case IDC_START_SENDER:
-			mManager.setupSender(videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
+			//mManager.setupSender(videoWindow0, "127.0.0.1", 10001, 10002); // init manager with my video view
 			// Server Ip has been set up at initialize
-			mManager.makeCall(); // Receiver is decided by server application, just send video and audio
+			//mManager.makeCall(); // Receiver is decided by server application, just send video and audio
+			testJson = json11::Json::object{
+				{"command", "ACCEPT"},
+				{"contents", json11::Json::object {
+					{"uuid", "g_in_uuid"},
+					{"callid", "g_in_callId"}}
+				}
+			};
+			testJsonStr = testJson.dump();
+			jsonCStr = testJsonStr.c_str();
+			CallService::GetInstance().SendMessageToHandler(WM_RECEIVED_MESSAGE, 0, (LPARAM)jsonCStr);
 			break;
 		case IDC_STOP_SENDER:
-			mManager.pauseCall();
+			//mManager.pauseCall();
 			break;
 		case IDC_START_RECEIVER:
-			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // 1 video setup
-			mManager.playReceiver(1);
+			//mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // 1 video setup
+			//mManager.playReceiver(1);
 			break;
 		case IDC_STOP_RECEIVER:
-			mManager.pauseReceiver(1);
+			//mManager.pauseReceiver(1);
 			break;
 		case IDC_START_RECEIVER2:
-			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // 2 video setup
-			mManager.playReceiver(2);
+			//mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // 2 video setup
+			//mManager.playReceiver(2);
 			break;
 		case IDC_STOP_RECEIVER2:
-			mManager.pauseReceiver(2);
+			//mManager.pauseReceiver(2);
 			break;
 		case IDC_START_RECEIVER3:
-			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // 3 video setup
-			mManager.playReceiver(3);
+			//mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // 3 video setup
+			//mManager.playReceiver(3);
 			break;
 		case IDC_STOP_RECEIVER3:
-			mManager.pauseReceiver(3);
+			//mManager.pauseReceiver(3);
 			break;
 		case IDC_START_RECEIVER4:
-			mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // 4 video setup
-			mManager.playReceiver(4);
+			//mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // 4 video setup
+			//mManager.playReceiver(4);
 			break;
 		case IDC_STOP_RECEIVER4:
-			mManager.pauseReceiver(4);
+			//mManager.pauseReceiver(4);
 			break;
 		case IDC_ACCEPT_ALL:
-			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
-			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // second video setup
-			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // third video setup
-			mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // third video setup
-			mManager.playReceiver(1);
-			mManager.playReceiver(2);
-			mManager.playReceiver(3);
-			mManager.playReceiver(4);
+			//mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
+			//mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // second video setup
+			//mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // third video setup
+			//mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // third video setup
+			//mManager.playReceiver(1);
+			//mManager.playReceiver(2);
+			//mManager.playReceiver(3);
+			//mManager.playReceiver(4);
 			break;
 		}
 #endif
@@ -405,7 +416,7 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 	// ���� ������ ����
-	videoWindow0 = CreateWindowW(
+	windows.videoWindow0 = CreateWindowW(
 		L"STATIC",
 		L"Sender",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -413,11 +424,11 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hWnd, nullptr, g_hInstance, nullptr
 	);
 	// ���� ����� ���� ������ ��Ÿ���� �����մϴ�.
-	SetWindowLongPtr(videoWindow0, GWL_STYLE, GetWindowLongPtr(videoWindow0, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
-	SetWindowPos(videoWindow0, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+	SetWindowLongPtr(windows.videoWindow0, GWL_STYLE, GetWindowLongPtr(windows.videoWindow0, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(windows.videoWindow0, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
 	// ���� ������ ����
-	videoWindow1 = CreateWindowW(
+	windows.videoWindow1 = CreateWindowW(
 		L"STATIC",
 		L"Receiver1",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -425,11 +436,11 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hWnd, nullptr, g_hInstance, nullptr
 	);
 	// ���� ����� ���� ������ ��Ÿ���� �����մϴ�.
-	SetWindowLongPtr(videoWindow1, GWL_STYLE, GetWindowLongPtr(videoWindow1, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
-	SetWindowPos(videoWindow1, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+	SetWindowLongPtr(windows.videoWindow1, GWL_STYLE, GetWindowLongPtr(windows.videoWindow1, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(windows.videoWindow1, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
 	// ���� ������ ����
-	videoWindow2 = CreateWindowW(
+	windows.videoWindow2 = CreateWindowW(
 		L"STATIC",
 		L"Receiver2",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -437,11 +448,11 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hWnd, nullptr, g_hInstance, nullptr
 	);
 	// ���� ����� ���� ������ ��Ÿ���� �����մϴ�.
-	SetWindowLongPtr(videoWindow2, GWL_STYLE, GetWindowLongPtr(videoWindow2, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
-	SetWindowPos(videoWindow2, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+	SetWindowLongPtr(windows.videoWindow2, GWL_STYLE, GetWindowLongPtr(windows.videoWindow2, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(windows.videoWindow2, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
 	// ���� ������ ����
-	videoWindow3 = CreateWindowW(
+	windows.videoWindow3 = CreateWindowW(
 		L"STATIC",
 		L"Receiver3",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -449,11 +460,11 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hWnd, nullptr, g_hInstance, nullptr
 	);
 	// ���� ����� ���� ������ ��Ÿ���� �����մϴ�.
-	SetWindowLongPtr(videoWindow3, GWL_STYLE, GetWindowLongPtr(videoWindow3, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
-	SetWindowPos(videoWindow3, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+	SetWindowLongPtr(windows.videoWindow3, GWL_STYLE, GetWindowLongPtr(windows.videoWindow3, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(windows.videoWindow3, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
 	// ���� ������ ����
-	videoWindow4 = CreateWindowW(
+	windows.videoWindow4 = CreateWindowW(
 		L"STATIC",
 		L"Receiver4",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -461,8 +472,8 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hWnd, nullptr, g_hInstance, nullptr
 	);
 	// ���� ����� ���� ������ ��Ÿ���� �����մϴ�.
-	SetWindowLongPtr(videoWindow4, GWL_STYLE, GetWindowLongPtr(videoWindow4, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
-	SetWindowPos(videoWindow4, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+	SetWindowLongPtr(windows.videoWindow4, GWL_STYLE, GetWindowLongPtr(windows.videoWindow4, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(windows.videoWindow4, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 #if MEDIADEBUG
 	const unsigned int buttonWidth = 100;
 	const unsigned int buttonHeight = 30;
