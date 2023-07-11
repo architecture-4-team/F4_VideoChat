@@ -10,7 +10,6 @@
 #include "WebView2.h"
 #include "json11.hpp"
 #include "CallService.h"
-#include "util.h"
 
 using namespace Microsoft::WRL;
 // Pointer to WebViewController

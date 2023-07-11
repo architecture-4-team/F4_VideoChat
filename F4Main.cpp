@@ -39,8 +39,7 @@ OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
 
 CallService* callService = &CallService::GetInstance();
-Util* util = new Util();
-
+Util* util = &Util::GetInstance();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -129,9 +128,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
 	_tcscat_s(_buffer, _T("/config.json"));
 
-	util->LoadFile(*_buffer);
+	std::string jsonStr = util->LoadFile(_buffer);
+	std::string err;
+	json11::Json jsonConfig = json11::Json::parse(jsonStr, err);
 
-	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow);
+	std::string serverAddress = jsonConfig["server_address"].string_value();
+	std::string uiServerAddress = jsonConfig["ui_server_address"].string_value();
+	std::string uiLocal = jsonConfig["ui_local"].string_value();
+
+	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow, uiServerAddress);
 	loginWindow->startWebview(g_loginWindow);
 
 	// Message loop

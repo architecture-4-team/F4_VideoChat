@@ -5,7 +5,6 @@ HWND g_contact_handle;
 HWND g_contact_main_handle;
 SocketClient* g_contact_socketClient;
 char buffer[1024];
-Util* mutil = new Util();
 std::string g_uuid;
 
 ContactListWindow::ContactListWindow(HWND window, SocketClient* socket, HWND mainWindow)

@@ -5,12 +5,14 @@ HWND g_handle;
 HWND g_mainHandle;
 SocketClient* g_socketClient;
 char loginBuffer[1024];
+std::string g_address;
 
-LoginWindow::LoginWindow(HWND window, SocketClient* socket, HWND mainWindow)
+LoginWindow::LoginWindow(HWND window, SocketClient* socket, HWND mainWindow, std::string address)
 {
 	hWindow = window;
 	g_socketClient = socket;
 	g_mainHandle = mainWindow;
+	g_address = address;
 };
 
 void LoginWindow::startWebview(HWND gWindow)
@@ -44,9 +46,16 @@ void LoginWindow::startWebview(HWND gWindow)
 						webviewController2->put_Bounds(bounds);
 
 						TCHAR buffer[MAX_PATH];
-						DWORD res = GetCurrentDirectory(MAX_PATH, buffer);
-						_tcscat_s(buffer, _T("/login.html"));
 
+						if (g_address == "") // local file
+						{
+							DWORD res = GetCurrentDirectory(MAX_PATH, buffer);
+							_tcscat_s(buffer, _T("/login.html"));
+						}
+						else {
+							g_address = g_address + "/login";
+							Util::GetInstance().SetStringToTCharBuffer(g_address, buffer, MAX_PATH);
+						}
 						webview2->Navigate(buffer);
 
 						EventRegistrationToken token;
