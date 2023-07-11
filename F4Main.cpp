@@ -1,4 +1,4 @@
-//#include "SocketCommunication.h"
+ï»¿//#include "SocketCommunication.h"
 #include "socketClient.h"
 #include <Windows.h>
 #include <tchar.h>
@@ -13,7 +13,7 @@
 #include <mmsystem.h>
 #include "CallService.h"
 #include "IncommingCallWindow.h"
-<<<<<<< HEAD
+
 #include "MultimediaManager.h"
 #include <gst/gst.h>
 
@@ -24,9 +24,9 @@ static wil::com_ptr<ICoreWebView2Controller> webviewController;
 
 // Pointer to WebView window
 static wil::com_ptr<ICoreWebView2> webview;
-=======
+
 #include "OutgoingCallWindow.h"
->>>>>>> origin/UI_works
+
 
 // Global variables
 HINSTANCE g_hInstance;
@@ -35,26 +35,27 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-<<<<<<< HEAD
-#define MEDIADEBUG 0
+
+#define MEDIADEBUG 1
 
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 #if MEDIADEBUG
-static void SetStdOutToNewConsole(void);
-static FILE* pCout = NULL;
+void CreateConsoleWindow(void);
 #endif
 
 //SocketCommunication* socketComm = new SocketCommunication(std::string("127.0.0.1"), 10000);
-=======
->>>>>>> origin/UI_works
+
+
 SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 
 MultimediaManager& mManager = MultimediaManager::GetInstance();
 
-HWND videoWindow0; // Video Ãâ·Â¿ë À©µµ¿ì ÇÚµé
-HWND videoWindow1; // Video Ãâ·Â¿ë À©µµ¿ì ÇÚµé
-HWND videoWindow2; // Video Ãâ·Â¿ë À©µµ¿ì ÇÚµé
-HWND videoWindow3; // Video Ãâ·Â¿ë À©µµ¿ì ÇÚµé
+HWND videoWindow0; // Video ì¶œë ¥ìš© ìœˆë„ìš° í•¸ë“¤
+HWND videoWindow1; // Video ì¶œë ¥ìš© ìœˆë„ìš° í•¸ë“¤
+HWND videoWindow2; // Video ì¶œë ¥ìš© ìœˆë„ìš° í•¸ë“¤
+HWND videoWindow3; // Video ì¶œë ¥ìš© ìœˆë„ìš° í•¸ë“¤
+HWND videoWindow4; // Video ì¶œë ¥ìš© ìœˆë„ìš° í•¸ë“¤
+
 
 HWND g_loginWindow;
 HWND g_mainWindow;
@@ -65,17 +66,15 @@ HWND g_inCallWindow;
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
 
-<<<<<<< HEAD
-=======
+
 CallService* callService = &CallService::GetInstance();
 
->>>>>>> origin/UI_works
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
 	HWND hLoginWindow;
 
-	//SetStdOutToNewConsole();
+	//CreateConsoleWindow();
 
 	//gst_debug_set_default_threshold(GST_LEVEL_FIXME);
 	//gst_debug_set_active(true);
@@ -275,7 +274,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			socketClient->SendMessageW(byeJson.dump());
 		}
 #if MEDIADEBUG
-		// ¸Ş´º ¼±ÅÃÀ» ±¸¹® ºĞ¼®ÇÕ´Ï´Ù:
+		// ë©”ë‰´ ì„ íƒì„ êµ¬ë¬¸ ë¶„ì„í•©ë‹ˆë‹¤:
 		switch (LOWORD(wParam))
 		{
 		case IDC_START_SENDER:
@@ -287,36 +286,42 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			mManager.pauseCall();
 			break;
 		case IDC_START_RECEIVER:
-			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
+			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // 1 video setup
 			mManager.playReceiver(1);
 			break;
 		case IDC_STOP_RECEIVER:
 			mManager.pauseReceiver(1);
 			break;
 		case IDC_START_RECEIVER2:
-			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // first video setup
+			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // 2 video setup
 			mManager.playReceiver(2);
 			break;
 		case IDC_STOP_RECEIVER2:
 			mManager.pauseReceiver(2);
 			break;
 		case IDC_START_RECEIVER3:
-			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // first video setup
+			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // 3 video setup
 			mManager.playReceiver(3);
 			break;
 		case IDC_STOP_RECEIVER3:
 			mManager.pauseReceiver(3);
 			break;
+		case IDC_START_RECEIVER4:
+			mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // 4 video setup
+			mManager.playReceiver(4);
+			break;
+		case IDC_STOP_RECEIVER4:
+			mManager.pauseReceiver(4);
+			break;
 		case IDC_ACCEPT_ALL:
 			mManager.setupReceiver(videoWindow1, 10001, 10002, 1); // first video setup
 			mManager.setupReceiver(videoWindow2, 10001, 10002, 2); // second video setup
 			mManager.setupReceiver(videoWindow3, 10001, 10002, 3); // third video setup
-			mManager.makeReceiverStateChange(1, GST_STATE_PAUSED);
-			mManager.makeReceiverStateChange(2, GST_STATE_PAUSED);
-			mManager.makeReceiverStateChange(3, GST_STATE_PAUSED);
+			mManager.setupReceiver(videoWindow4, 10001, 10002, 4); // third video setup
 			mManager.playReceiver(1);
 			mManager.playReceiver(2);
 			mManager.playReceiver(3);
+			mManager.playReceiver(4);
 			break;
 		}
 #endif
@@ -355,6 +360,8 @@ typedef enum
 	_BUTNUM_RECV2_STOP,
 	_BUTNUM_RECV3_START,
 	_BUTNUM_RECV3_STOP,
+	_BUTNUM_RECV4_START,
+	_BUTNUM_RECV4_STOP,
 	_BUTNUM_RECV_ACCEPT_ALL,
 	_BUTNUM_MAX
 }E_BUT_NUM;
@@ -365,6 +372,7 @@ typedef enum
 	_VIDEO_1,
 	_VIDEO_2,
 	_VIDEO_3,
+	_VIDEO_4,
 	_VIDEO_VIEW_MAX
 }E_VIDEO_NUM;
 
@@ -375,68 +383,86 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	const unsigned int videoWidthMargin = 20;
 	const unsigned int videoHeightMargin = 80;
 
-	unsigned int videoPosX[_VIDEO_VIEW_MAX] = { 20, };
-	unsigned int videoPosY[_VIDEO_VIEW_MAX] = { 100, };
+	unsigned int videoPosX[_VIDEO_VIEW_MAX] = { 20 };
+	unsigned int videoPosY[_VIDEO_VIEW_MAX] = { 100 };
 
-	videoPosX[_VIDEO_1] = videoPosX[_VIDEO_0] + videoWidth + videoWidthMargin;
-	videoPosY[_VIDEO_1] = videoPosY[_VIDEO_0];
+	std::fill(videoPosX, videoPosX + _VIDEO_VIEW_MAX, 20);
+	std::fill(videoPosY, videoPosY + _VIDEO_VIEW_MAX, 100);
 
+	videoPosX[_VIDEO_0] = 750;
+	videoPosY[_VIDEO_0] = 200;
 
-	videoPosX[_VIDEO_2] = videoPosX[_VIDEO_0];
-	videoPosY[_VIDEO_2] = videoPosY[_VIDEO_0] + videoHeight + videoHeightMargin;
+	videoPosX[_VIDEO_2] = videoPosX[_VIDEO_1] + videoWidth + videoWidthMargin;
+	videoPosY[_VIDEO_2] = videoPosY[_VIDEO_1];
 
 
 	videoPosX[_VIDEO_3] = videoPosX[_VIDEO_1];
-	videoPosY[_VIDEO_3] = videoPosY[_VIDEO_2];
+	videoPosY[_VIDEO_3] = videoPosY[_VIDEO_1] + videoHeight + videoHeightMargin;
 
 
-	// ºñµğ¿À À©µµ¿ì »ı¼º
+	videoPosX[_VIDEO_4] = videoPosX[_VIDEO_2];
+	videoPosY[_VIDEO_4] = videoPosY[_VIDEO_3];
+
+
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	videoWindow0 = CreateWindowW(
 		L"STATIC",
-		L"Video Window",
+		L"Sender",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
 		videoPosX[_VIDEO_0], videoPosY[_VIDEO_0], videoWidth, videoHeight,
 		hWnd, nullptr, g_hInstance, nullptr
 	);
-	// ºñµğ¿À Ãâ·ÂÀ» À§ÇØ À©µµ¿ì ½ºÅ¸ÀÏÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	SetWindowLongPtr(videoWindow0, GWL_STYLE, GetWindowLongPtr(videoWindow0, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(videoWindow0, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
-	// ºñµğ¿À À©µµ¿ì »ı¼º
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	videoWindow1 = CreateWindowW(
 		L"STATIC",
-		L"Video Window1",
+		L"Receiver1",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
 		videoPosX[_VIDEO_1], videoPosY[_VIDEO_1], videoWidth, videoHeight,
 		hWnd, nullptr, g_hInstance, nullptr
 	);
-	// ºñµğ¿À Ãâ·ÂÀ» À§ÇØ À©µµ¿ì ½ºÅ¸ÀÏÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	SetWindowLongPtr(videoWindow1, GWL_STYLE, GetWindowLongPtr(videoWindow1, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(videoWindow1, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
-	// ºñµğ¿À À©µµ¿ì »ı¼º
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	videoWindow2 = CreateWindowW(
 		L"STATIC",
-		L"Video Window2",
+		L"Receiver2",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
 		videoPosX[_VIDEO_2], videoPosY[_VIDEO_2], videoWidth, videoHeight,
 		hWnd, nullptr, g_hInstance, nullptr
 	);
-	// ºñµğ¿À Ãâ·ÂÀ» À§ÇØ À©µµ¿ì ½ºÅ¸ÀÏÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	SetWindowLongPtr(videoWindow2, GWL_STYLE, GetWindowLongPtr(videoWindow2, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(videoWindow2, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
-	// ºñµğ¿À À©µµ¿ì »ı¼º
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	videoWindow3 = CreateWindowW(
 		L"STATIC",
-		L"Video Window3",
+		L"Receiver3",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
 		videoPosX[_VIDEO_3], videoPosY[_VIDEO_3], videoWidth, videoHeight,
 		hWnd, nullptr, g_hInstance, nullptr
 	);
-	// ºñµğ¿À Ãâ·ÂÀ» À§ÇØ À©µµ¿ì ½ºÅ¸ÀÏÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	SetWindowLongPtr(videoWindow3, GWL_STYLE, GetWindowLongPtr(videoWindow3, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(videoWindow3, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	videoWindow4 = CreateWindowW(
+		L"STATIC",
+		L"Receiver4",
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		videoPosX[_VIDEO_4], videoPosY[_VIDEO_4], videoWidth, videoHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetWindowLongPtr(videoWindow4, GWL_STYLE, GetWindowLongPtr(videoWindow4, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+	SetWindowPos(videoWindow4, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 #if MEDIADEBUG
 	const unsigned int buttonWidth = 100;
 	const unsigned int buttonHeight = 30;
@@ -466,11 +492,16 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	posX[_BUTNUM_RECV3_STOP] = posX[_BUTNUM_RECV3_START] + buttonWidth + widthMargin;
 	posY[_BUTNUM_RECV3_STOP] = posY[_BUTNUM_RECV3_START];
 
+	posX[_BUTNUM_RECV4_START] = videoPosX[_VIDEO_4] + (videoWidth / 4) - (buttonWidth / 3);
+	posY[_BUTNUM_RECV4_START] = videoPosY[_VIDEO_4] + videoHeight + 10;
+	posX[_BUTNUM_RECV4_STOP] = posX[_BUTNUM_RECV4_START] + buttonWidth + widthMargin;
+	posY[_BUTNUM_RECV4_STOP] = posY[_BUTNUM_RECV4_START];
+
 	posX[_BUTNUM_RECV_ACCEPT_ALL] = 700;
 	posY[_BUTNUM_RECV_ACCEPT_ALL] = 10;
 
 
-	// ¹öÆ° »ı¼º
+	// ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½
 	CreateWindow(
 		_T("button"),
 		_T("Start"),
@@ -482,7 +513,7 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		NULL
 	);
 
-	// ¹öÆ° »ı¼º
+	// ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½
 	CreateWindow(
 		_T("button"),
 		_T("Stop"),
@@ -562,6 +593,28 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	CreateWindow(
 		_T("button"),
+		_T("Start R4"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV4_START], posY[_BUTNUM_RECV4_START], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_START_RECEIVER4,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
+		_T("Stop R4"),
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		posX[_BUTNUM_RECV4_STOP], posY[_BUTNUM_RECV4_STOP], buttonWidth, buttonHeight,
+		hWnd,
+		(HMENU)IDC_STOP_RECEIVER4,
+		((LPCREATESTRUCT)lParam)->hInstance,
+		NULL
+	);
+
+	CreateWindow(
+		_T("button"),
 		_T("AcceptAll"),
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		posX[_BUTNUM_RECV_ACCEPT_ALL], posY[_BUTNUM_RECV_ACCEPT_ALL], buttonWidth, buttonHeight,
@@ -575,11 +628,21 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 #if MEDIADEBUG
-static void SetStdOutToNewConsole(void)
+void CreateConsoleWindow()
 {
-	// Allocate a console for this app
-	AllocConsole();
-	AttachConsole(ATTACH_PARENT_PROCESS);
-	freopen_s(&pCout, "CONOUT$", "w", stdout);
+	// Attach the console to the calling process
+	if (!AttachConsole(ATTACH_PARENT_PROCESS))
+	{
+		// If the console is not available, create a new console
+		AllocConsole();
+	}
+
+	// Redirect standard input/output to the console
+	freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
+	freopen_s(reinterpret_cast<FILE**>(stdin), "CONIN$", "r", stdin);
+	freopen_s(reinterpret_cast<FILE**>(stderr), "CONOUT$", "w", stderr);
+
+	// Update the synchronization of C and C++ standard streams
+	std::ios::sync_with_stdio();
 }
 #endif
