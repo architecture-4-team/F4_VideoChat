@@ -74,6 +74,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
     std::wstring wsEmail;
     json11::Json inviteJson;
     std::wstring wStringCommon;
+	json11::Json loginJson;
 
     // 메시지 처리
     switch (msg) {
@@ -104,17 +105,17 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 			PostMessage(mMainWindow, WM_CREATE_INCOMMING_WINDOW_MESSAGE, 0, 0);
 		}
-		else if (command == "LOGIN")
+		else if (command == "SESSION")
 		{
 			if (response == "OK")
 			{
 				uuidString = contentsJson["uuid"].string_value();
-				emailString = contentsJson["email"].string_value();
 
-				std::string welcome = "welcome " + uuidString + " " + emailString;
+				std::string welcome = "welcome " + uuidString;
 				std::wstring welcomeMessage(welcome.begin(), welcome.end());
 
-				MessageBox(hWnd, welcomeMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
+				SendMessage(m_loginWindow, WM_CLOSE, 0, 0);
+//				MessageBox(hWnd, welcomeMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
 			}
 			else
 			{
@@ -174,17 +175,19 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		stdMessage = std::string(message);
 		receiveJson = json11::Json::parse(stdMessage, errorMessage);
-		targetEmail = receiveJson["email"].string_value();
-		targetUuid = receiveJson["uuid"].string_value();
 
-		//uuidString = targetUuid; //todo: we have to change of return value of login request.
-		SetMyEmail(targetEmail);
-		//SetMyUUID(targetUuid); //todo
+		SetMyUUID(receiveJson["uuid"].string_value());
+		SetMyEmail(receiveJson["email"].string_value());
 
-		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
-
-		MessageBox(hWnd, wsEmail.c_str(), _T("login completed!"), MB_ICONERROR | MB_OK);
-
+		loginJson = json11::Json::object{
+			{"command", "SESSION"},
+				{"contents",json11::Json::object{
+					{"email", GetMyEmail()},
+					{"uuid", GetMyUUID()}
+				}
+			}
+		};
+		m_socketClient->SendMessageW(loginJson.dump());
 		break;
 
 	case WM_CONTACT_MESSAGE:
