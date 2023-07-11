@@ -23,7 +23,6 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-SocketClient* socketClient = new SocketClient("127.0.0.1", 10000);
 
 std::string uiServerAddress = "";
 
@@ -41,6 +40,8 @@ IncommingCallWindow* incommingCallWindow;
 CallService* callService = &CallService::GetInstance();
 Util* util = &Util::GetInstance();
 
+SocketClient* socketClient;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	HWND hMainWindow;
@@ -48,6 +49,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Store the instance handle
 	g_hInstance = hInstance;
+
+	// load config file
+	TCHAR _buffer[MAX_PATH];
+	DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
+	_tcscat_s(_buffer, _T("/config.json"));
+
+	std::string jsonStr = util->LoadFile(_buffer);
+	std::string err;
+	json11::Json jsonConfig = json11::Json::parse(jsonStr, err);
+
+	std::string serverAddress = jsonConfig["server_address"].string_value();
+	int serverPort = jsonConfig["server_port"].int_value();
+	std::string uiServerAddress = jsonConfig["ui_server_address"].string_value();
+	std::string uiLocal = jsonConfig["ui_local"].string_value();
+
+	socketClient = new SocketClient("127.0.0.1", serverPort);
+
 
 	// Register the main window class
 	WNDCLASSEX wcex = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, MainWndProc, 0, 0, hInstance, nullptr,
@@ -113,8 +131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 	callService->ProcessMessages();
-	socketClient->Connect(hMainWindow);
-
+	
 	// Show and update the main window
 	ShowWindow(hMainWindow, SW_MAXIMIZE);
 	UpdateWindow(hMainWindow);
@@ -123,18 +140,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(hLoginWindow, nCmdShow);
 	UpdateWindow(hLoginWindow);
 
-	// try load a config file
-	TCHAR _buffer[MAX_PATH];
-	DWORD res = GetCurrentDirectory(MAX_PATH, _buffer);
-	_tcscat_s(_buffer, _T("/config.json"));
-
-	std::string jsonStr = util->LoadFile(_buffer);
-	std::string err;
-	json11::Json jsonConfig = json11::Json::parse(jsonStr, err);
-
-	std::string serverAddress = jsonConfig["server_address"].string_value();
-	std::string uiServerAddress = jsonConfig["ui_server_address"].string_value();
-	std::string uiLocal = jsonConfig["ui_local"].string_value();
+	socketClient->Connect(hMainWindow);
 
 	LoginWindow* loginWindow = new LoginWindow(hLoginWindow, socketClient, g_mainWindow, uiServerAddress);
 	loginWindow->startWebview(g_loginWindow);
