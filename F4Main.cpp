@@ -151,7 +151,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Create a end multi call button
 	HWND hLeaveRoomButton = CreateWindowEx(0, _T("BUTTON"), _T("Leave Room"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
+		360, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
 	if (!hLeaveRoomButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
