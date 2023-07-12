@@ -50,7 +50,7 @@ private:
 	unsigned int sendVideoWidth		= 320;
 	unsigned int sendVideoHeight	= 240;
 
-	unsigned int sendVideoBitRate	= 512;	//(x264 codec)default : 2048
+	unsigned int sendVideoBitRate	= 128;	//(x264 codec)default : 2048
 	unsigned int sendVideoTune		= 0x4;	//(x264 codec)(bitwise) 0x1: still image, 0x2: Fast Decode, 0x4: zero latency
 	
     GstElement* senderVideoPipeline;
