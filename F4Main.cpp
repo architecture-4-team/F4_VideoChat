@@ -114,7 +114,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Create the main window
 	hMainWindow = CreateWindowEx(0, _T("MainWindowClass"), _T("Main Window"), WS_OVERLAPPEDWINDOW,
-		0, 0, 800, 600, nullptr, nullptr, hInstance, nullptr);
+		0, 0, 720, 720, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hMainWindow)
 	{
