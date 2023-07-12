@@ -19,6 +19,7 @@
 
 #define MEDIADEBUG 0
 #define USE_QUAD_WINDOW_CALL 0
+#define USE_CONSOLE 0
 
 // Global variables
 HINSTANCE g_hInstance;
@@ -29,7 +30,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-#if MEDIADEBUG
+#if MEDIADEBUG || USE_CONSOLE
 void CreateConsoleWindow();
 
 json11::Json testJson = json11::Json::object{
@@ -73,7 +74,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hMainWindow;
 	HWND hLoginWindow;
 
-	//CreateConsoleWindow();
+#if USE_CONSOLE
+	CreateConsoleWindow();
+#endif 
 
 	//gst_debug_set_default_threshold(GST_LEVEL_FIXME);
 	//gst_debug_set_active(true);
@@ -788,8 +791,8 @@ LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
-#if MEDIADEBUG
-void SetStdOutToNewConsole()
+#if MEDIADEBUG || USE_CONSOLE
+void CreateConsoleWindow()
 {
 	// Attach the console to the calling process
 	if (!AttachConsole(ATTACH_PARENT_PROCESS))
