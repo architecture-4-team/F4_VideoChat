@@ -177,7 +177,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			if (m_outCallWindow) {
 				SendMessage(m_outCallWindow, WM_CLOSE, 0, 0);
 			}
-			SetupCall(3);
+			SetupCall(1);
 
 			myName = converter.from_bytes(GetDestEmail());
 			SetWindowTextW(windows->hTextWnd1, myName.c_str());
@@ -278,7 +278,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		PostMessage(mMainWindow, WM_SHOW_LEAVE_ROOM_BUTTON_MESSAGE, 0, 0);
 		// Join mulicall 
-
+		SetupCall(3);
 		break;
 
 	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
@@ -302,7 +302,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
 
-		SetupCall(3);
+		SetupCall(1);
 		myName = converter.from_bytes(GetDestEmail());
 		SetWindowTextW(windows->hTextWnd1, myName.c_str());
 		break;
@@ -313,6 +313,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 	case WM_LEAVE_MESSAGE: // When I leave the multi call room
 		PostMessage(mMainWindow, WM_HIDE_LEAVE_ROOM_BUTTON_MESSAGE, 0, 0);
 		// add here
+		EndCall();
 		break;
     default:
         return DefWindowProc(hWnd, msg, wParam, lParam);
