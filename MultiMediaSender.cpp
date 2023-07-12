@@ -281,11 +281,11 @@ void MultimediaSender::setVideoEncTune()
     g_object_set(G_OBJECT(videoEnc), "tune", sendVideoTune, nullptr);
 }
 
-void MultimediaSender::setAudioOpusencAudioType(int audioType, int bandwidth, int bitrate, int bitrateType)
+void MultimediaSender::setAudioOpusencAudioType(int audioType, int bandwidth, int bitrate, int bitrateType, int frameSize, bool inbandFEC)
 {
     g_object_set(G_OBJECT(audioOpusenc), "audio-type", audioType, "bandwidth", 
-					bandwidth, "bitrate", bitrate, "bitrate-type", bitrateType, nullptr);
-}
+					bandwidth, "bitrate", bitrate, "bitrate-type", bitrateType, 
+					"frame-size", frameSize, "inband-fec", inbandFEC, nullptr);}
 
 void MultimediaSender::setWindow(void* hVideo)
 {

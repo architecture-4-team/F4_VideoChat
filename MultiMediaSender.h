@@ -35,7 +35,7 @@ public:
     void setVideoFlipMethod(int method);
 	void setVideoEncBitRate();
     void setVideoEncTune();
-    void setAudioOpusencAudioType(int audioType, int bandwidth, int bitrate, int bitrateType);
+    void setAudioOpusencAudioType(int audioType, int bandwidth, int bitrate, int bitrateType, int frameSize, bool inbandFEC);
 
 private:
     MultimediaSender();
