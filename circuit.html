@@ -4,10 +4,11 @@
     <script>
         function sendMessage() { 
             window.chrome.webview.postMessage("loading_complete");
-        }
+        };
 
         var uiServerAddress = "";
         var count = 0;
+        var time_wait = 0;
 
         function pingServer() {
             var xhr = new XMLHttpRequest();
@@ -27,12 +28,13 @@
                             count += 1;
                             document.getElementById("count").textContent = "Retry counts : " + count;
                         }, 10000);
+
                     }
                 }
             };
             xhr.open("GET", uiServerAddress, true);
             xhr.send();
-        }
+        };
 
         window.chrome.webview.addEventListener('message', arg => {
             pingServer();

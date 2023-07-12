@@ -19,7 +19,11 @@ private:
     SOCKET m_socket;
     std::unique_ptr<std::thread> m_thread;
     bool m_running;
+    bool m_running_conn;
+    bool m_is_connected;
 //    CallService* m_callService;
     bool Initialize();
     void ReceiveThread();
+    std::unique_ptr<std::thread> m_thread_conn;
+    void ConnectionThread();
 };

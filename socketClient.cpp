@@ -2,6 +2,7 @@
 #include "common.h"
 
 HWND m_mainWindow;
+sockaddr_in serverAddress;
 
 SocketClient::SocketClient(const char* ipAddress, int port) : 
     m_socket(INVALID_SOCKET), 
@@ -25,16 +26,23 @@ bool SocketClient::Connect(HWND mainWindow) {
     }
 
     // 서버 정보 설정
-    sockaddr_in serverAddress;
+    serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(m_port);
     inet_pton(AF_INET, m_ipAddress, &(serverAddress.sin_addr));
 
-    // 서버에 연결
-    if (connect(m_socket, (sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
+    
+    //// 서버에 연결
+    /*if (connect(m_socket, (sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
         WSACleanup();
         return false;
-    }
+    }*/
+
+    // 연결 스레드
+    m_is_connected = false;
+    m_running_conn = true;
+    m_thread_conn = std::make_unique<std::thread>(&SocketClient::ConnectionThread, this);
+
 
     // 수신 스레드 시작
     m_running = true;
@@ -76,6 +84,13 @@ void SocketClient::ReceiveThread() {
     const int bufferSize = 1024;
     char buffer[bufferSize];
 
+    while (true) {
+        Sleep(1000);
+        if (m_is_connected) {
+            break;
+        }
+    }
+
     while (m_running) {
         int bytesReceived = recv(m_socket, buffer, bufferSize - 1, 0);
         if (bytesReceived > 0) {
@@ -95,3 +110,22 @@ void SocketClient::ReceiveThread() {
     }
 }
 
+void SocketClient::ConnectionThread() {
+    BOOL successConn = FALSE;
+    while (m_running_conn) {
+        if (successConn) 
+        {
+            m_running_conn = false;
+            break;
+        }
+        else if (connect(m_socket, (sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
+            WSACleanup();
+            Sleep(5000);
+        }
+        else 
+        {
+            successConn = TRUE;
+            m_is_connected = true;
+        }
+    }
+}
