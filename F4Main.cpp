@@ -143,11 +143,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Create a change user info button
 	HWND hEditInfoButton = CreateWindowEx(0, _T("BUTTON"), _T("My Info"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		250, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(3), hInstance, nullptr);
-	if (!hCallEndButton)
+	if (!hEditInfoButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
+
+	// Create a end multi call button
+	HWND hLeaveRoomButton = CreateWindowEx(0, _T("BUTTON"), _T("Leave Room"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
+	if (!hLeaveRoomButton)
+	{
+		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
+		return 1;
+	}
+
 
 	// Create the login window
 	g_loginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
@@ -297,6 +307,22 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			EditInfoWindow* editInfoListWindow = new EditInfoWindow(hEditInfoWindow, socketClient, g_mainWindow, uiServerAddress);
 			editInfoListWindow->startWebview(g_editInfoWindow, callService->GetMyUUID());
+		}
+		else if (LOWORD(wParam) == 4)
+		{
+			json11::Json leaveJson = json11::Json::object{
+				{"command", "LEAVE"},
+				{"contents", json11::Json::object {
+						{"uuid", callService->GetMyUUID()},
+						{"email", callService->GetMyEmail()},
+						{"roomid", callService->GetCallId()}
+					}
+				}
+			};
+			socketClient->SendMessageW(leaveJson.dump());
+
+			// Multi Call end
+			callService->SendMessageToHandler(WM_LEAVE_MESSAGE, wParam, lParam);
 		}
 #if MEDIADEBUG
 		

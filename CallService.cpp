@@ -77,6 +77,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
     json11::Json inviteJson;
     std::wstring wStringCommon;
 	json11::Json loginJson;
+	json11::Json joinJson;
 
     // 메시지 처리
     switch (msg) {
@@ -177,6 +178,14 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			myName = converter.from_bytes(GetDestEmail());
 			SetWindowTextW(windows->hTextWnd1, myName.c_str());
 		}
+		else if (command == "LEAVE") // the other user leave the multi call room.
+		{
+			std::string myUUID = contentsJson["uuid"].string_value();
+			std::string emailReave = contentsJson["leave_email"].string_value();
+			std::string rooId = contentsJson["roomid"].string_value();
+			
+			// do something when other user leave the room.
+		}
         break;
 
 	case WM_LOGON_COMPLETED_MESSAGE:
@@ -237,6 +246,32 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		break;
 
+	case WM_JOIN_MULTICALL_MESSAGE:
+		message = reinterpret_cast<const char*>(lParam);
+		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
+		wideMessage.resize(length);
+		MultiByteToWideChar(CP_UTF8, 0, message, -1, &wideMessage[0], length);
+
+		stdMessage = std::string(message);
+		receiveJson = json11::Json::parse(stdMessage, errorMessage);
+
+		SetCallId(receiveJson["roomid"].string_value());
+
+		joinJson = json11::Json::object{
+			{"command", "JOIN"},
+			{"response", "PARTICIPATE"},
+			{"contents", json11::Json::object{
+				{"uuid", GetMyUUID()},
+				{"roomid", GetCallId()}}
+			}
+		};
+
+		m_socketClient->SendMessageW(joinJson.dump());
+
+		// Join mulicall 
+
+		break;
+
 	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
 		// Accept Response to the caller
 		Util::GetInstance().StopPlaying();
@@ -263,6 +298,9 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		break;
 	case WM_BYE_MESSAGE:
 		EndCall();
+		break;
+	case WM_LEAVE_MESSAGE: // When I leave the multi call room
+		// add here
 		break;
     default:
         return DefWindowProc(hWnd, msg, wParam, lParam);

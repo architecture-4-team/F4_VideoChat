@@ -97,9 +97,9 @@ void ContactListWindow::startWebview(HWND gWindow, std::string uuid)
 									//PostMessage(g_contact_main_handle, WM_CONTACT_MESSAGE, 0, (LPARAM)buffer);
 									CallService::GetInstance().SendMessageToHandler(WM_CONTACT_MESSAGE, 0, (LPARAM)buffer);
 								}
-								else
+								else if (messageJson["action"] == "join") 
 								{
-									//toDo, the other action ??
+									CallService::GetInstance().SendMessageToHandler(WM_JOIN_MULTICALL_MESSAGE, 0, (LPARAM)buffer);
 								}
 								SendMessage(g_contact_handle, WM_CLOSE, 0, 0);
 
