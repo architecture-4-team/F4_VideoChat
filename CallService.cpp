@@ -131,6 +131,8 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		else if (command == "CANCEL")
 		{
+			PostMessage(mMainWindow, WM_HIDE_END_CALL_BUTTON_MESSAGE, 0, 0);
+
 			Util::GetInstance().StopPlaying();
 
 			if (response == "NOT AVAILABLE")
@@ -162,6 +164,8 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		else if (command == "ACCEPT")
 		{
+			PostMessage(mMainWindow, WM_SHOW_END_CALL_BUTTON_MESSAGE, 0, 0);
+
 			Util::GetInstance().StopPlaying();
 			// When I get accept message from callee
 			std::string uuid;
@@ -185,6 +189,10 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			std::string rooId = contentsJson["roomid"].string_value();
 			
 			// do something when other user leave the room.
+		}
+		else if (command == "BYE")
+		{
+			PostMessage(mMainWindow, WM_HIDE_END_CALL_BUTTON_MESSAGE, 0, 0);
 		}
         break;
 
@@ -268,12 +276,14 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		m_socketClient->SendMessageW(joinJson.dump());
 
+		PostMessage(mMainWindow, WM_SHOW_LEAVE_ROOM_BUTTON_MESSAGE, 0, 0);
 		// Join mulicall 
 
 		break;
 
 	case WM_ACCEPT_INCOMMING_CALL_MESSAGE:
 		// Accept Response to the caller
+		PostMessage(mMainWindow, WM_SHOW_END_CALL_BUTTON_MESSAGE, 0, 0);
 		Util::GetInstance().StopPlaying();
 		message = reinterpret_cast<const char*>(lParam);
 		length = MultiByteToWideChar(CP_UTF8, 0, message, -1, nullptr, 0);
@@ -297,9 +307,11 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		SetWindowTextW(windows->hTextWnd1, myName.c_str());
 		break;
 	case WM_BYE_MESSAGE:
+		PostMessage(mMainWindow, WM_HIDE_END_CALL_BUTTON_MESSAGE, 0, 0);
 		EndCall();
 		break;
 	case WM_LEAVE_MESSAGE: // When I leave the multi call room
+		PostMessage(mMainWindow, WM_HIDE_LEAVE_ROOM_BUTTON_MESSAGE, 0, 0);
 		// add here
 		break;
     default:

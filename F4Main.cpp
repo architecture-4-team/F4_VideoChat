@@ -57,6 +57,9 @@ HWND g_outCallWindow;
 HWND g_inCallWindow;
 HWND g_editInfoWindow;
 
+HWND g_CallEndButton;
+HWND g_LeaveRoomButton;
+
 OutgoingCallWindow* outGoingCallWindow;
 IncommingCallWindow* incommingCallWindow;
 
@@ -132,17 +135,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Create a end call button
-	HWND hCallEndButton = CreateWindowEx(0, _T("BUTTON"), _T("End Call"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(2), hInstance, nullptr);
-	if (!hCallEndButton)
+	g_CallEndButton = CreateWindowEx(0, _T("BUTTON"), _T("End Call"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		350, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(2), hInstance, nullptr);
+	if (!g_CallEndButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
+	ShowWindow(g_CallEndButton, SW_HIDE);
 
 	// Create a change user info button
 	HWND hEditInfoButton = CreateWindowEx(0, _T("BUTTON"), _T("My Info"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		250, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(3), hInstance, nullptr);
+		120, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(3), hInstance, nullptr);
 	if (!hEditInfoButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
@@ -150,14 +154,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Create a end multi call button
-	HWND hLeaveRoomButton = CreateWindowEx(0, _T("BUTTON"), _T("Leave Room"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		360, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
-	if (!hLeaveRoomButton)
+	g_LeaveRoomButton = CreateWindowEx(0, _T("BUTTON"), _T("Leave Room"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		350, 10, 100, 30, hMainWindow, reinterpret_cast<HMENU>(4), hInstance, nullptr);
+	if (!g_LeaveRoomButton)
 	{
 		MessageBox(nullptr, _T("Failed to create button."), _T("Error"), MB_ICONERROR | MB_OK);
 		return 1;
 	}
-
+	ShowWindow(g_LeaveRoomButton, SW_HIDE);
 
 	// Create the login window
 	g_loginWindow = CreateWindowEx(0, _T("ChildWindowClass"), _T("Login Window"), WS_OVERLAPPEDWINDOW,
@@ -246,6 +250,26 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		outGoingCallWindow->startWebview(g_outCallWindow);
 
 		callService->UpdateOutCallHandle(g_outCallWindow);
+		break;
+
+	case WM_SHOW_END_CALL_BUTTON_MESSAGE:
+		ShowWindow(g_CallEndButton, SW_SHOW);
+		UpdateWindow(g_CallEndButton);
+		break;
+
+	case WM_HIDE_END_CALL_BUTTON_MESSAGE:
+		ShowWindow(g_CallEndButton, SW_HIDE);
+		UpdateWindow(g_CallEndButton);
+		break;
+
+	case WM_SHOW_LEAVE_ROOM_BUTTON_MESSAGE:
+		ShowWindow(g_LeaveRoomButton, SW_SHOW);
+		UpdateWindow(g_LeaveRoomButton);
+		break;
+
+	case WM_HIDE_LEAVE_ROOM_BUTTON_MESSAGE:
+		ShowWindow(g_LeaveRoomButton, SW_HIDE);
+		UpdateWindow(g_LeaveRoomButton);
 		break;
 
 	case WM_DESTROY:
