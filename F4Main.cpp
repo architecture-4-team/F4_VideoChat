@@ -169,7 +169,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	callService->ProcessMessages();
 
 	// Show and update the main window
-	ShowWindow(hMainWindow, SW_MAXIMIZE);
+	ShowWindow(hMainWindow, nCmdShow);
 	UpdateWindow(hMainWindow);
 
 	// Show and update the main window
