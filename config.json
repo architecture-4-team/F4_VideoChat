@@ -1,7 +1,7 @@
 {
-  "server_address__": "192.168.2.8",
-  "server_address": "127.0.0.1",
+  "server_address": "192.168.2.8",
+  "server_address__": "127.0.0.1",
   "server_port":  10000,
-  "ui_server_address": "http://192.168.2.8:3000",
+  "ui_server_address": "http://192.168.2.9:3000",
   "ui_server_address__": ""
 }

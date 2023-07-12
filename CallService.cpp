@@ -125,6 +125,8 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		}
 		else if (command == "CANCEL")
 		{
+			Util::GetInstance().StopPlaying();
+
 			if (response == "NOT AVAILABLE")
 			{
 				MessageBox(hWnd, _T("Callee is not available."), _T("info"), MB_ICONERROR | MB_OK);

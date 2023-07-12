@@ -102,6 +102,8 @@ void OutgoingCallWindow::startWebview(HWND gWindow)
 									};
 									g_outcall_socketClient->SendMessageW(byeJson.dump());
 									SendMessage(g_outcall_handle, WM_CLOSE, 0, 0);
+
+									Util::GetInstance().StopPlaying();
 								}
 								return S_OK;
 							}).Get(), &token);
