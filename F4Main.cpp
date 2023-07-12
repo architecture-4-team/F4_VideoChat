@@ -17,6 +17,8 @@
 #include "EditInfoWindow.h"
 #include "Util.h"
 
+#define MEDIADEBUG 0
+#define USE_QUAD_WINDOW_CALL 0
 
 // Global variables
 HINSTANCE g_hInstance;
@@ -25,7 +27,6 @@ HINSTANCE g_hInstance;
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-#define MEDIADEBUG 0
 LRESULT OnSize(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 #if MEDIADEBUG
@@ -426,6 +427,7 @@ typedef enum
 	_VIDEO_VIEW_MAX
 }E_VIDEO_NUM;
 
+
 static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	const unsigned int videoWidth = 320;
@@ -439,21 +441,28 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	std::fill(videoPosX, videoPosX + _VIDEO_VIEW_MAX, 20);
 	std::fill(videoPosY, videoPosY + _VIDEO_VIEW_MAX, 100);
 
+#if USE_QUAD_WINDOW_CALL
 	videoPosX[_VIDEO_0] = 750;
 	videoPosY[_VIDEO_0] = 200;
 
 	videoPosX[_VIDEO_2] = videoPosX[_VIDEO_1] + videoWidth + videoWidthMargin;
 	videoPosY[_VIDEO_2] = videoPosY[_VIDEO_1];
 
-
 	videoPosX[_VIDEO_3] = videoPosX[_VIDEO_1];
 	videoPosY[_VIDEO_3] = videoPosY[_VIDEO_1] + videoHeight + videoHeightMargin;
 
-
 	videoPosX[_VIDEO_4] = videoPosX[_VIDEO_2];
 	videoPosY[_VIDEO_4] = videoPosY[_VIDEO_3];
+#else
+	videoPosX[_VIDEO_1] = videoPosX[_VIDEO_0] + videoWidth + videoWidthMargin;
+	videoPosY[_VIDEO_1] = videoPosY[_VIDEO_0];
 
+	videoPosX[_VIDEO_2] = videoPosX[_VIDEO_0];
+	videoPosY[_VIDEO_2] = videoPosY[_VIDEO_0] + videoHeight + videoHeightMargin;
 
+	videoPosX[_VIDEO_3] = videoPosX[_VIDEO_1];
+	videoPosY[_VIDEO_3] = videoPosY[_VIDEO_2];
+#endif 
 
 	windows.videoWindow0 = CreateWindowW(
 		L"STATIC",
@@ -501,7 +510,7 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	SetWindowLongPtr(windows.videoWindow3, GWL_STYLE, GetWindowLongPtr(windows.videoWindow3, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(windows.videoWindow3, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 
-	
+#if USE_QUAD_WINDOW_CALL
 	windows.videoWindow4 = CreateWindowW(
 		L"STATIC",
 		L"Receiver4",
@@ -512,6 +521,8 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	
 	SetWindowLongPtr(windows.videoWindow4, GWL_STYLE, GetWindowLongPtr(windows.videoWindow4, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(windows.videoWindow4, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+#endif 
+	
 #if MEDIADEBUG
 	const unsigned int buttonWidth = 100;
 	const unsigned int buttonHeight = 30;
