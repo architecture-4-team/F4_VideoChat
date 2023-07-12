@@ -1,5 +1,7 @@
 #include "CallService.h"
 
+
+
 CallService& CallService::GetInstance() {
     static CallService callInstance;
     return callInstance;
@@ -192,6 +194,9 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			}
 		};
 		m_socketClient->SendMessageW(loginJson.dump());
+		
+		myName = converter.from_bytes(GetMyEmail());
+		SetWindowTextW(windows->hTextWnd0, myName.c_str());
 		break;
 
 	case WM_CONTACT_MESSAGE:
@@ -299,7 +304,7 @@ void CallService::SetupCall(int numCalls) {
 	switch(numCalls)
 	{
 	case 4:
-		mManager.setupReceiver(windows->videoWindow4, 10001, 10002, 4); // third video setup
+		mManager.setupReceiver(windows->videoWindow4, 5007, 5008, 4); // third video setup
 		mManager.playReceiver(4);
 	case 3:
 		mManager.setupReceiver(windows->videoWindow3, 5005, 5006, 3); // third video setup
@@ -319,6 +324,15 @@ void CallService::SetupCall(int numCalls) {
 
 void CallService::EndCall() {
 	mManager.endCall();
+
+	InvalidateRect(windows->videoWindow4, NULL, TRUE);
+	UpdateWindow(windows->videoWindow4);
+
+	InvalidateRect(windows->videoWindow3, NULL, TRUE);
+	UpdateWindow(windows->videoWindow3);
+
+	InvalidateRect(windows->videoWindow2, NULL, TRUE);
+	UpdateWindow(windows->videoWindow2);
 
 	InvalidateRect(windows->videoWindow1, NULL, TRUE);
 	UpdateWindow(windows->videoWindow1);

@@ -114,7 +114,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Create the main window
 	hMainWindow = CreateWindowEx(0, _T("MainWindowClass"), _T("Main Window"), WS_OVERLAPPEDWINDOW,
-		0, 0, 720, 720, nullptr, nullptr, hInstance, nullptr);
+		0, 0, 720, 750, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hMainWindow)
 	{
@@ -418,6 +418,8 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	const unsigned int videoHeight = 240;
 	const unsigned int videoWidthMargin = 20;
 	const unsigned int videoHeightMargin = 80;
+	const unsigned int textWidth = 150;
+	const unsigned int textHeight = 20;
 
 	unsigned int videoPosX[_VIDEO_VIEW_MAX] = { 20 };
 	unsigned int videoPosY[_VIDEO_VIEW_MAX] = { 100 };
@@ -493,7 +495,56 @@ static LRESULT OnCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	
 	SetWindowLongPtr(windows.videoWindow3, GWL_STYLE, GetWindowLongPtr(windows.videoWindow3, GWL_STYLE) | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 	SetWindowPos(windows.videoWindow3, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+	
+	//////////////////////// Text 창
+#if !MEDIADEBUG
+	unsigned int textPosX[_VIDEO_VIEW_MAX] = { 20 };
+	unsigned int textPosY[_VIDEO_VIEW_MAX] = { 100 };
 
+	textPosX[_VIDEO_0] = videoPosX[_VIDEO_0] + videoWidth / 2 - textWidth / 2; // 문자열 창의 가로 위치
+	textPosY[_VIDEO_0] = videoPosY[_VIDEO_0] + videoHeight + 10; // 문자열 창의 세로 위치
+
+	textPosX[_VIDEO_1] = videoPosX[_VIDEO_1] + videoWidth / 2 - textWidth / 2; // 문자열 창의 가로 위치
+	textPosY[_VIDEO_1] = videoPosY[_VIDEO_1] + videoHeight + 10; // 문자열 창의 세로 위치
+
+	textPosX[_VIDEO_2] = videoPosX[_VIDEO_2] + videoWidth / 2 - textWidth / 2; // 문자열 창의 가로 위치
+	textPosY[_VIDEO_2] = videoPosY[_VIDEO_2] + videoHeight + 10; // 문자열 창의 세로 위치
+
+	textPosX[_VIDEO_3] = videoPosX[_VIDEO_3] + videoWidth / 2 - textWidth / 2; // 문자열 창의 가로 위치
+	textPosY[_VIDEO_3] = videoPosY[_VIDEO_3] + videoHeight + 10; // 문자열 창의 세로 위치
+
+	windows.hTextWnd0 = CreateWindowW(
+		L"STATIC",
+		L"",
+		WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER,
+		textPosX[_VIDEO_0], textPosY[_VIDEO_0], textWidth, textHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+
+	windows.hTextWnd1 = CreateWindowW(
+		L"STATIC",
+		L"",
+		WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER,
+		textPosX[_VIDEO_1], textPosY[_VIDEO_1], textWidth, textHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+
+	windows.hTextWnd2 = CreateWindowW(
+		L"STATIC",
+		L"",
+		WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER,
+		textPosX[_VIDEO_2], textPosY[_VIDEO_2], textWidth, textHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+
+	windows.hTextWnd3 = CreateWindowW(
+		L"STATIC",
+		L"",
+		WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER,
+		textPosX[_VIDEO_3], textPosY[_VIDEO_3], textWidth, textHeight,
+		hWnd, nullptr, g_hInstance, nullptr
+	);
+#endif
 #if USE_QUAD_WINDOW_CALL
 	windows.videoWindow4 = CreateWindowW(
 		L"STATIC",

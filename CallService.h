@@ -3,6 +3,8 @@
 #include <iostream>
 #include <windows.h>
 #include <tchar.h>
+#include <locale>
+#include <codecvt>
 #include "common.h"
 #include "json11.hpp"
 #include "MultimediaManager.h"
@@ -14,6 +16,11 @@ typedef struct {
     HWND videoWindow2; // for Receiver2
     HWND videoWindow3; // for Receiver3
     HWND videoWindow4; // for Receiver4
+    HWND hTextWnd0;
+    HWND hTextWnd1;
+    HWND hTextWnd2;
+    HWND hTextWnd3;
+    HWND hTextWnd4;
 }VideoWindows;
 
 class CallService {
@@ -55,6 +62,8 @@ private:
 
     MultimediaManager& mManager = MultimediaManager::GetInstance();
     VideoWindows* windows;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring myName;
     void SetupCall(int numCalls);
     void EndCall();
 
