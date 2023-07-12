@@ -99,6 +99,9 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		if (command == "INVITE")
 		{
+			ShowWindow(mMainWindow, SW_RESTORE);
+			SetForegroundWindow(mMainWindow);
+
 			Util::GetInstance().PlayRing();
 			std::string callerEmail;
 			callerEmail = contentsJson["email"].string_value();

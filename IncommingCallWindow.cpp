@@ -111,6 +111,7 @@ void IncommingCallWindow::startWebview(HWND gWindow)
 								}
 								else if (wcscmp(message.get(), L"reject_call") == 0) //reject call
 								{
+									Util::GetInstance().StopPlaying();
 									json11::Json rejectJson = json11::Json::object{
 										{"command", "CANCEL"},
 										{"response", "REJECT"},

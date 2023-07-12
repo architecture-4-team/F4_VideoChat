@@ -11,6 +11,7 @@
 #include "WebView2.h"
 #include "common.h"
 #include "CallService.h"
+#include "Util.h"
 
 using namespace Microsoft::WRL;
 // Pointer to WebViewController
