@@ -70,7 +70,8 @@ bool MultimediaManager::setupSender(void* hVideo, std::string ip, int videoPort,
 	//int bitrateType
 	//cbr (0) ??CBR, vbr (1), constrained-vbr (2)
 
-    dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2051, 1105, 64000, 2); //fist pre-set
+	dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2048, 1101, 16000, 2); //fist pre-set
+    //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2051, 1105, 64000, 2); //fist pre-set
     //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2048, 1105, 192000, 1); //High-voip Quality
     //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2049, 1105, 192000, 0); //High Quality
     //dynamic_cast<MultimediaSender&>(mSender).setAudioOpusencAudioType(2048, 1103, 128000, 1); //Mid Quality
