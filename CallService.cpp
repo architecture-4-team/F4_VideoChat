@@ -122,6 +122,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				std::wstring welcomeMessage(welcome.begin(), welcome.end());
 
 				SendMessage(m_loginWindow, WM_CLOSE, 0, 0);
+				PostMessage(mMainWindow, WM_FOREGROUND_MAIN_MESSAGE, 0, 0);
 //				MessageBox(hWnd, welcomeMessage.c_str(), _T("info"), MB_ICONERROR | MB_OK);
 			}
 			else

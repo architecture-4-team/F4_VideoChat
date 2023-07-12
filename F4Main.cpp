@@ -272,6 +272,11 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		UpdateWindow(g_LeaveRoomButton);
 		break;
 
+	case WM_FOREGROUND_MAIN_MESSAGE:
+		ShowWindow(g_mainWindow, SW_RESTORE);
+		SetForegroundWindow(g_mainWindow);
+		break;
+
 	case WM_DESTROY:
 		socketClient->Disconnect();
 		PostQuitMessage(0);
