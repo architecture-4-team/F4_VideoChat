@@ -170,6 +170,9 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				SendMessage(m_outCallWindow, WM_CLOSE, 0, 0);
 			}
 			SetupCall(3);
+
+			myName = converter.from_bytes(GetDestEmail());
+			SetWindowTextW(windows->hTextWnd1, myName.c_str());
 		}
         break;
 
@@ -252,6 +255,8 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
 
 		SetupCall(3);
+		myName = converter.from_bytes(GetDestEmail());
+		SetWindowTextW(windows->hTextWnd1, myName.c_str());
 		break;
 	case WM_BYE_MESSAGE:
 		EndCall();
