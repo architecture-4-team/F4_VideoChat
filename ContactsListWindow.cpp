@@ -90,7 +90,7 @@ void ContactListWindow::startWebview(HWND gWindow, std::string uuid)
 								std::string errorMessage;
 								json11::Json messageJson = json11::Json::parse(messgeJsonStr, errorMessage);
 
-								MessageBox(g_contact_handle, message.get(), _T("info"), MB_ICONERROR | MB_OK);
+								//MessageBox(g_contact_handle, message.get(), _T("info"), MB_ICONERROR | MB_OK);
 
 								if (messageJson["action"] == "call") {
 									//send event to main window to activate a call window

@@ -90,7 +90,7 @@ void EditInfoWindow::startWebview(HWND gWindow, std::string uuid)
 								std::string errorMessage;
 								json11::Json messageJson = json11::Json::parse(messgeJsonStr, errorMessage);
 
-								MessageBox(g_editInfo_handle, message.get(), _T("info"), MB_ICONERROR | MB_OK);
+								//MessageBox(g_editInfo_handle, message.get(), _T("info"), MB_ICONERROR | MB_OK);
 
 								if (messageJson["action"] == "close") {
 									SendMessage(g_editInfo_handle, WM_CLOSE, 0, 0);

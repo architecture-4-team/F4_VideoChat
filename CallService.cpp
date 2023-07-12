@@ -239,7 +239,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		wsEmail = std::wstring(targetEmail.begin(), targetEmail.end());
 
-		MessageBox(hWnd, wsEmail.c_str(), _T("message from contact"), MB_ICONERROR | MB_OK);
+		//MessageBox(hWnd, wsEmail.c_str(), _T("message from contact"), MB_ICONERROR | MB_OK);
 
 		PostMessage(mMainWindow, WM_CREATE_OUTGOING_WINDOW_MESSAGE, 0, 0);
 		// send invite to server
@@ -301,7 +301,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		SetCallId(contentsJson["callid"].string_value());
 		wStringCommon = std::wstring(stdMessage.begin(), stdMessage.end());
 
-		MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
+		//MessageBox(hWnd, wStringCommon.c_str(), _T("accept call"), MB_ICONERROR | MB_OK);
 
 		SetupCall(1);
 		myName = converter.from_bytes(GetDestEmail());
