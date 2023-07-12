@@ -46,17 +46,11 @@ void LoginWindow::startWebview(HWND gWindow)
 						webviewController2->put_Bounds(bounds);
 
 						TCHAR buffer[MAX_PATH];
-
-						if (g_address_login == "") // local file
-						{
-							DWORD res = GetCurrentDirectory(MAX_PATH, buffer);
-							_tcscat_s(buffer, _T("/login.html"));
-						}
-						else {
-							g_address_login = g_address_login + "/login";
-							Util::GetInstance().SetStringToTCharBuffer(g_address_login, buffer, MAX_PATH);
-						}
+						DWORD res = GetCurrentDirectory(MAX_PATH, buffer);
+						_tcscat_s(buffer, _T("/circuit.html"));
 						webview2->Navigate(buffer);
+
+
 
 						EventRegistrationToken token;
 						webview2->AddScriptToExecuteOnDocumentCreated(L"Object.freeze(Object);", nullptr);
@@ -80,7 +74,18 @@ void LoginWindow::startWebview(HWND gWindow)
 								//processMessage(&message);
 								json11::Json loginJson;
 
-								if (wcscmp(message.get(), L"loginA_cliked") == 0) {
+								if (wcscmp(message.get(), L"loading_complete") == 0) {
+									TCHAR buffer2[MAX_PATH];
+									Util::GetInstance().SetStringToTCharBuffer(g_address_login, buffer2, MAX_PATH);
+
+									webview2->PostWebMessageAsString(buffer2);
+								} 
+								else if (wcscmp(message.get(), L"server_fail") == 0)
+								{
+									webview2->PostWebMessageAsString(L"try_again");
+								}
+								else if (wcscmp(message.get(), L"loginA_cliked") == 0) 
+								{
 									loginJson = json11::Json::object{
 										{"command", "LOGIN"},
 										{"contents",json11::Json::object{

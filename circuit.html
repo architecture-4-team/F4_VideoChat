@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        function sendMessage() { 
+            window.chrome.webview.postMessage("loading_complete");
+        }
+
+        var uiServerAddress = "";
+        var count = 0;
+
+        function pingServer() {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        document.getElementById("status").textContent = "Server is available.";
+                        window.location.href = uiServerAddress.concat("/login");
+                    } else {
+                        document.getElementById("status").textContent = "Can't access to server. Wait please.";
+
+                        // wait 10sec
+//                        window.chrome.webview.postMessage("server_fail");
+
+                        setTimeout(function() {
+                            window.chrome.webview.postMessage("server_fail");
+                            count += 1;
+                            document.getElementById("count").textContent = "Retry counts : " + count;
+                        }, 10000);
+                    }
+                }
+            };
+            xhr.open("GET", uiServerAddress, true);
+            xhr.send();
+        }
+
+        window.chrome.webview.addEventListener('message', arg => {
+            pingServer();
+            if (arg.data !== "try_again") {
+                uiServerAddress = arg.data;
+            }
+        });
+
+        window.onload = sendMessage;
+    </script>
+</head>
+<body>
+    <h1>Check UI Server status...</h1>
+    <p id="status"></p>
+    <p id="count"></p>
+</body>
+</html>

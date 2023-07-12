@@ -233,6 +233,7 @@
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="circuit.html" />
     <None Include="html1.htm">
       <DeploymentContent>true</DeploymentContent>
     </None>
