@@ -285,7 +285,7 @@ void MultimediaSender::setAudioOpusencAudioType(int audioType, int bandwidth, in
 {
     g_object_set(G_OBJECT(audioOpusenc), "audio-type", audioType, "bandwidth", 
 					bandwidth, "bitrate", bitrate, "bitrate-type", bitrateType, 
-					"frame-size", frameSize, "inband-fec", inbandFEC, nullptr);}
+					"frame-size", frameSize, "inband-fec", inbandFEC, "dtx", TRUE, nullptr);}
 
 void MultimediaSender::setWindow(void* hVideo)
 {
