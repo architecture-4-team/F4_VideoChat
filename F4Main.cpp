@@ -194,22 +194,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	const char* message;
-	std::wstring wideMessage;
-	std::string stdMessage;
-	std::string errorMessage;
-	json11::Json receiveJson;
-	std::string command;
-	std::string response;
-	std::string contentsJsonString;
-	json11::Json contentsJson;
-	int length;
-	std::string targetEmail;
-	std::string targetUuid;
-	std::wstring wsEmail;
-	json11::Json inviteJson;
-	std::wstring wStringCommon;
-
 	switch (msg)
 	{
 	case WM_SOCKET_MESSAGE:
