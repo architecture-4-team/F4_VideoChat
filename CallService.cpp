@@ -194,6 +194,7 @@ LRESULT CALLBACK CallService::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		else if (command == "BYE")
 		{
 			PostMessage(mMainWindow, WM_HIDE_END_CALL_BUTTON_MESSAGE, 0, 0);
+			EndCall();
 		}
         break;
 
