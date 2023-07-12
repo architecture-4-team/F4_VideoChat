@@ -94,7 +94,7 @@ bool MultimediaReceiver::initialize()
 
 
     /* ToDo : shall be discussed */
-    this->setJitterBuffer(50);
+    this->setJitterBuffer(100);
     this->setRTP();
 
     initialized = true;
