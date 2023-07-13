@@ -43,17 +43,16 @@
                         document.getElementById("status").textContent = "Server is available.";
                         window.location.href = uiServerAddress.concat("/login");
                     } else {
-                        document.getElementById("status").textContent = "Can't access to server. Wait please.";
+                        document.getElementById("status").textContent = "Try to access server. Wait please.";
 
                         // wait 10sec
                         //                        window.chrome.webview.postMessage("server_fail");
 
                         setTimeout(function () {
                             window.chrome.webview.postMessage("server_fail");
-                            count += 1;
                             document.getElementById("count").textContent = "Retry counts : " + count;
-                        }, 10000);
-
+                            count += 1;
+                        }, 1000);
                     }
                 }
             };
